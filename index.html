@@ -58,7 +58,6 @@
             height: 140px;
         }
 
-        /* Contenedor del pad - SIEMPRE CENTRADO */
         .analog-pad-container {
             position: absolute;
             left: 50%;
@@ -67,7 +66,6 @@
             display: block;
         }
 
-        /* ===== PAD ANALÓGICO FIJO ===== */
         .analog-pad {
             position: relative;
             width: 140px;
@@ -130,7 +128,7 @@
         .analog-pad .dir-left { left: 6px; top: 50%; transform: translateY(-50%); }
         .analog-pad .dir-right { right: 6px; top: 50%; transform: translateY(-50%); }
 
-        /* ===== INFO - TAMAÑO DE FUENTE 120% ===== */
+        /* ===== INFO CENTRADA - FUENTE 140% ===== */
         .pad-info-left {
             position: absolute;
             left: 0px;
@@ -141,18 +139,24 @@
             min-width: 70px;
             pointer-events: none;
             z-index: 10;
-            text-align: right;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         .pad-info-left .info-item {
             display: block;
             padding: 3px 0;
-            font-size: 1.2rem;  /* 120% del tamaño base (1rem = 16px) */
+            font-size: 1.4rem;
             font-weight: 700;
             color: #b7d0f0;
             text-shadow: 0 0 15px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.7);
             font-family: 'Segoe UI', system-ui, sans-serif;
             letter-spacing: 0.3px;
             white-space: nowrap;
+            text-align: center;
+            width: 100%;
         }
         .pad-info-left .info-item .value.energy {
             color: #ffbb77;
@@ -174,18 +178,24 @@
             min-width: 70px;
             pointer-events: none;
             z-index: 10;
-            text-align: left;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         .pad-info-right .info-item {
             display: block;
             padding: 3px 0;
-            font-size: 1.2rem;  /* 120% del tamaño base */
+            font-size: 1.4rem;
             font-weight: 700;
             color: #b7d0f0;
             text-shadow: 0 0 15px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.7);
             font-family: 'Segoe UI', system-ui, sans-serif;
             letter-spacing: 0.3px;
             white-space: nowrap;
+            text-align: center;
+            width: 100%;
         }
         .pad-info-right .info-item .value.level {
             color: #ffcc88;
@@ -353,7 +363,7 @@
                 right: 0px;
             }
             .pad-info-left .info-item, .pad-info-right .info-item {
-                font-size: 0.9rem;  /* 120% en móvil */
+                font-size: 1.05rem;
                 padding: 2px 0;
             }
             .music-indicator {
@@ -391,7 +401,7 @@
                 right: 0px;
             }
             .pad-info-left .info-item, .pad-info-right .info-item {
-                font-size: 0.75rem;  /* 120% en móvil pequeño */
+                font-size: 0.9rem;
                 padding: 1px 0;
             }
         }
@@ -418,9 +428,7 @@
             <div class="timer" id="timerDisplay">⏱ 0s</div>
         </div>
 
-        <!-- PAD ANALÓGICO CON INFO -->
         <div class="analog-pad-wrapper">
-            <!-- INFO IZQUIERDA -->
             <div class="pad-info-left" id="padInfoLeft">
                 <div class="info-item">
                     <span class="value energy" id="padVel">100%</span>
@@ -433,7 +441,6 @@
                 </div>
             </div>
 
-            <!-- PAD ANALÓGICO -->
             <div class="analog-pad-container">
                 <div class="analog-pad" id="analogPad">
                     <span class="direction-indicator dir-up">▲</span>
@@ -445,7 +452,6 @@
                 </div>
             </div>
 
-            <!-- INFO DERECHA -->
             <div class="pad-info-right" id="padInfoRight">
                 <div class="info-item">
                     <span class="value level" id="padLevel">Mercurio</span>
@@ -644,7 +650,7 @@
                 });
             }
 
-            // ========== SISTEMA DE AUDIO ==========
+            // ========== SISTEMA DE AUDIO - MÚSICA AL 40% DE VELOCIDAD ==========
             let audioCtx = null;
             let musicActive = false;
             let musicGain = null;
@@ -687,10 +693,11 @@
                 if (isMusicPaused) {
                     isMusicPaused = false;
                     if (musicActive) {
-                        musicInterval = setInterval(playArcadeMelody, 300);
-                        bassInterval = setInterval(playArcadeBass, 600);
-                        drumInterval = setInterval(playArcadeDrums, 400);
-                        document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (Lenta)';
+                        // Velocidad al 40% (más lenta)
+                        musicInterval = setInterval(playArcadeMelody, 375);   // 150 / 0.4 = 375
+                        bassInterval = setInterval(playArcadeBass, 750);     // 300 / 0.4 = 750
+                        drumInterval = setInterval(playArcadeDrums, 500);    // 200 / 0.4 = 500
+                        document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (40%)';
                     }
                 }
             }
@@ -711,24 +718,24 @@
                     ];
                     
                     const mel = melodies[currentMelody % melodies.length];
-                    const duration = 0.16;
+                    const duration = 0.2; // Más lento (antes 0.16)
                     
                     for (let i = 0; i < 4; i++) {
                         const noteIndex = (Math.floor(Math.random() * mel.length));
                         const freq = mel[noteIndex] * (0.9 + Math.random() * 0.2);
                         const osc = audioCtx.createOscillator();
                         osc.type = ['square', 'sawtooth', 'triangle'][Math.floor(Math.random() * 3)];
-                        osc.frequency.setValueAtTime(freq, now + i * 0.1);
+                        osc.frequency.setValueAtTime(freq, now + i * 0.125);
                         
                         const gain = audioCtx.createGain();
-                        gain.gain.setValueAtTime(0.04 + Math.random() * 0.06, now + i * 0.1);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + duration);
+                        gain.gain.setValueAtTime(0.04 + Math.random() * 0.06, now + i * 0.125);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.125 + duration);
                         
                         osc.connect(gain);
                         gain.connect(musicGain || audioCtx.destination);
                         
-                        osc.start(now + i * 0.1);
-                        osc.stop(now + i * 0.1 + duration);
+                        osc.start(now + i * 0.125);
+                        osc.stop(now + i * 0.125 + duration);
                     }
                     
                     const mainNote = mel[Math.floor(Math.random() * mel.length)];
@@ -764,13 +771,13 @@
                     
                     const gain = audioCtx.createGain();
                     gain.gain.setValueAtTime(0.08, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
                     
                     osc.connect(gain);
                     gain.connect(musicGain || audioCtx.destination);
                     
                     osc.start(now);
-                    osc.stop(now + 0.3);
+                    osc.stop(now + 0.4);
                 } catch(e) {}
             }
 
@@ -783,14 +790,14 @@
                     const oscKick = audioCtx.createOscillator();
                     oscKick.type = 'sine';
                     oscKick.frequency.setValueAtTime(120, now);
-                    oscKick.frequency.exponentialRampToValueAtTime(40, now + 0.16);
+                    oscKick.frequency.exponentialRampToValueAtTime(40, now + 0.2);
                     const gainKick = audioCtx.createGain();
                     gainKick.gain.setValueAtTime(0.2, now);
-                    gainKick.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                    gainKick.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
                     oscKick.connect(gainKick);
                     gainKick.connect(musicGain || audioCtx.destination);
                     oscKick.start(now);
-                    oscKick.stop(now + 0.16);
+                    oscKick.stop(now + 0.2);
                     
                     if (Math.random() < 0.3) {
                         const oscSnare = audioCtx.createOscillator();
@@ -798,11 +805,11 @@
                         oscSnare.frequency.setValueAtTime(180 + Math.random() * 100, now);
                         const gainSnare = audioCtx.createGain();
                         gainSnare.gain.setValueAtTime(0.12, now);
-                        gainSnare.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        gainSnare.gain.exponentialRampToValueAtTime(0.001, now + 0.125);
                         oscSnare.connect(gainSnare);
                         gainSnare.connect(musicGain || audioCtx.destination);
                         oscSnare.start(now);
-                        oscSnare.stop(now + 0.1);
+                        oscSnare.stop(now + 0.125);
                     }
                     
                     if (Math.random() < 0.4) {
@@ -811,11 +818,11 @@
                         oscHat.frequency.setValueAtTime(800 + Math.random() * 400, now);
                         const gainHat = audioCtx.createGain();
                         gainHat.gain.setValueAtTime(0.04, now);
-                        gainHat.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                        gainHat.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
                         oscHat.connect(gainHat);
                         gainHat.connect(musicGain || audioCtx.destination);
                         oscHat.start(now);
-                        oscHat.stop(now + 0.06);
+                        oscHat.stop(now + 0.075);
                     }
                     
                 } catch(e) {}
@@ -828,11 +835,12 @@
                     musicActive = true;
                     isMusicPaused = false;
                     
-                    musicInterval = setInterval(playArcadeMelody, 300);
-                    bassInterval = setInterval(playArcadeBass, 600);
-                    drumInterval = setInterval(playArcadeDrums, 400);
+                    // Velocidad al 40%
+                    musicInterval = setInterval(playArcadeMelody, 375);
+                    bassInterval = setInterval(playArcadeBass, 750);
+                    drumInterval = setInterval(playArcadeDrums, 500);
                     
-                    document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (Lenta)';
+                    document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (40%)';
                     
                 } catch(e) {
                     console.log('Error iniciando música arcade:', e);
@@ -943,6 +951,42 @@
                 } catch(e) {}
             }
 
+            // ===== SONIDO DE OVNI - VOLUMEN AL 80% =====
+            function playUfoSound() {
+                try {
+                    initAudio();
+                    const now = audioCtx.currentTime;
+                    
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.15);
+                    
+                    const osc2 = audioCtx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(800, now);
+                    osc2.frequency.exponentialRampToValueAtTime(500, now + 0.12);
+                    
+                    const gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    
+                    const gain2 = audioCtx.createGain();
+                    gain2.gain.setValueAtTime(0.08, now);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    
+                    osc.connect(gain);
+                    gain.connect(musicGain || audioCtx.destination);
+                    osc2.connect(gain2);
+                    gain2.connect(musicGain || audioCtx.destination);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                    osc2.start(now);
+                    osc2.stop(now + 0.15);
+                } catch(e) {}
+            }
+
             document.addEventListener('click', () => {
                 if (!audioInitialized) {
                     initAudio();
@@ -964,6 +1008,8 @@
             // ---------- Sistema de partículas ----------
             let trailParticles = [];
             let explosionAsteroids = [];
+            let ufoExplosionParticles = [];
+            let shockwaveRings = [];
 
             function spawnTrailParticle(x, y, color, size) {
                 trailParticles.push({
@@ -975,6 +1021,126 @@
                     size: size || (1 + Math.random() * 2),
                     color: color || '#81d4fa'
                 });
+            }
+
+            // ===== ANILLO DE ONDA EXPANSIVA =====
+            function spawnShockwaveRing(x, y, maxRadius, color, duration) {
+                shockwaveRings.push({
+                    x: x,
+                    y: y,
+                    radius: 5,
+                    maxRadius: maxRadius || 300,
+                    color: color || '#ffffff',
+                    life: 1.0,
+                    decay: 0.015,
+                    duration: duration || 60,
+                    progress: 0,
+                    width: 3,
+                });
+            }
+
+            function updateShockwaveRings() {
+                for (let i = shockwaveRings.length - 1; i >= 0; i--) {
+                    const ring = shockwaveRings[i];
+                    ring.progress += 0.02;
+                    ring.radius += ring.maxRadius / 40;
+                    ring.life -= ring.decay;
+                    ring.width *= 0.99;
+                    
+                    if (ring.life <= 0 || ring.radius > ring.maxRadius) {
+                        shockwaveRings.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawShockwaveRings() {
+                for (let ring of shockwaveRings) {
+                    const alpha = ring.life * 0.8;
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = ring.color;
+                    ctx.strokeStyle = ring.color;
+                    ctx.lineWidth = ring.width || 3;
+                    ctx.beginPath();
+                    ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.globalAlpha = alpha * 0.3;
+                    ctx.lineWidth = (ring.width || 3) * 0.5;
+                    ctx.beginPath();
+                    ctx.arc(ring.x, ring.y, ring.radius * 0.7, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            function spawnUfoExplosion(x, y) {
+                const colors = ['#00ff88', '#00ffcc', '#66ffaa', '#33ffbb', '#00ff99', '#ccff88'];
+                for (let i = 0; i < 50; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 5;
+                    const size = 2 + Math.random() * 5;
+                    ufoExplosionParticles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 0.5,
+                        life: 0.5 + Math.random() * 0.5,
+                        decay: 0.005 + Math.random() * 0.015,
+                        size: size,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        gravity: 0.02 + Math.random() * 0.03,
+                    });
+                }
+                for (let i = 0; i < 20; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 2 + Math.random() * 4;
+                    ufoExplosionParticles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 0.3,
+                        life: 0.3 + Math.random() * 0.3,
+                        decay: 0.01 + Math.random() * 0.02,
+                        size: 1 + Math.random() * 2,
+                        color: '#ffffff',
+                        gravity: 0.01,
+                    });
+                }
+            }
+
+            function updateUfoExplosionParticles() {
+                for (let i = ufoExplosionParticles.length - 1; i >= 0; i--) {
+                    const p = ufoExplosionParticles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity || 0;
+                    p.life -= p.decay;
+                    p.size *= 0.995;
+                    if (p.life <= 0 || p.size < 0.1) {
+                        ufoExplosionParticles.splice(i, 1);
+                    }
+                }
+                if (ufoExplosionParticles.length > 300) {
+                    ufoExplosionParticles.splice(0, ufoExplosionParticles.length - 300);
+                }
+            }
+
+            function drawUfoExplosionParticles() {
+                for (let p of ufoExplosionParticles) {
+                    const alpha = p.life * 0.9;
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.restore();
+                    ctx.globalAlpha = 1;
+                }
             }
 
             function spawnExplosionAsteroids(x, y, count, radius, planetColors) {
@@ -1088,7 +1254,6 @@
                 return points;
             }
 
-            // ========== FUNCIÓN PARA CALCULAR RADIO PROMEDIO ==========
             function calculateAverageRadius(polygon) {
                 if (!polygon || polygon.length === 0) return 20;
                 let totalRadius = 0;
@@ -1191,7 +1356,68 @@
                 ctx.shadowBlur = 0;
             }
 
-            // ========== DIBUJAR PLANETA CON BORDE NEGRO ==========
+            // ========== DIBUJAR OVNI ==========
+            function drawUfo(ctx, ufo) {
+                const { x, y, size, direction } = ufo;
+                const w = size * 2.5;
+                const h = size * 1.2;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                
+                ctx.shadowColor = '#00ff88';
+                ctx.shadowBlur = 40;
+                
+                ctx.beginPath();
+                ctx.ellipse(0, 0, w, h * 0.3, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 200, 150, 0.6)';
+                ctx.fill();
+                
+                ctx.shadowBlur = 20;
+                
+                ctx.beginPath();
+                ctx.ellipse(0, -h * 0.2, w * 0.5, h * 0.3, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(100, 255, 200, 0.5)';
+                ctx.fill();
+                
+                ctx.shadowBlur = 30;
+                ctx.beginPath();
+                ctx.ellipse(0, -h * 0.1, w * 0.2, h * 0.35, 0, 0, Math.PI * 2);
+                const grad = ctx.createRadialGradient(0, -h * 0.3, 0, 0, -h * 0.1, h * 0.3);
+                grad.addColorStop(0, 'rgba(150, 255, 255, 0.9)');
+                grad.addColorStop(0.5, 'rgba(0, 200, 200, 0.7)');
+                grad.addColorStop(1, 'rgba(0, 100, 150, 0.3)');
+                ctx.fillStyle = grad;
+                ctx.fill();
+                
+                ctx.shadowBlur = 15;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const lx = Math.cos(angle) * w * 0.9;
+                    const ly = Math.sin(angle) * h * 0.25;
+                    ctx.beginPath();
+                    ctx.arc(lx, ly, 2 + Math.random() * 2, 0, Math.PI * 2);
+                    const brightness = 0.5 + Math.random() * 0.5;
+                    ctx.fillStyle = `rgba(0, 255, 150, ${brightness})`;
+                    ctx.fill();
+                }
+                
+                ctx.shadowBlur = 50;
+                ctx.shadowColor = 'rgba(0, 255, 150, 0.3)';
+                ctx.beginPath();
+                ctx.moveTo(-w * 0.3, h * 0.3);
+                ctx.lineTo(w * 0.3, h * 0.3);
+                ctx.lineTo(w * 0.1, h * 0.8);
+                ctx.lineTo(-w * 0.1, h * 0.8);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(0, 255, 150, 0.08)';
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
+            // ========== DIBUJAR PLANETA CON BORDE NEGRO MÁS DELGADO ==========
             function drawPlanet(ctx, planet, radius) {
                 const { x, y, name, colors } = planet;
                 const mainColor = colors[0];
@@ -1281,7 +1507,7 @@
                 ctx.shadowBlur = 0;
                 
                 ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.arc(x, y, radius, 0, Math.PI * 2);
                 ctx.stroke();
@@ -1401,9 +1627,11 @@
                 visible: true,
             };
 
+            // ========== FUNCIÓN MODIFICADA: COLISIÓN DEL JUGADOR AL 100% ==========
             function initPlayerPolygon() {
                 player.polygon = generateIrregularPolygon(player.radius, 10, 0.5);
-                player.collisionRadius = calculateAverageRadius(player.polygon) * 0.85;
+                // Ahora al 100% (sin factor 0.85)
+                player.collisionRadius = calculateAverageRadius(player.polygon);
             }
             initPlayerPolygon();
 
@@ -1449,7 +1677,12 @@
             generateStaticContinents();
 
             let enemies = [];
+            let ufos = [];
+            let ufosSpawnedThisLevel = 0;
+            const MAX_UFOS_PER_LEVEL = 2;
             let frameCounter = 0;
+            let ufoSpawnCounter = 0;
+            let ufoSpawnInterval = 600;
             let keys = { up: false, down: false, left: false, right: false };
             let gameActive = true;
             let gameOverFlag = false;
@@ -1469,7 +1702,15 @@
                 }
                 
                 gameOverTimeout = setTimeout(() => {
-                    gameOverDiv.innerHTML = html;
+                    let cleanHtml = html;
+                    cleanHtml = cleanHtml.replace(/💥/g, '');
+                    cleanHtml = cleanHtml.replace(/🌌/g, '');
+                    cleanHtml = cleanHtml.replace(/🌍/g, '');
+                    cleanHtml = cleanHtml.trim();
+                    if (cleanHtml === '' || cleanHtml === '<br><small>¡Has completado el nivel!</small>') {
+                        cleanHtml = '¡NIVEL COMPLETADO!<br><small>¡Has completado el nivel!</small>';
+                    }
+                    gameOverDiv.innerHTML = cleanHtml;
                     if (isWin) {
                         gameOverDiv.classList.add('win');
                     } else {
@@ -1504,7 +1745,7 @@
                 padStruct.textContent = player.structure;
                 padLevel.textContent = planet ? planet.name : 'Mercurio';
                 const timeLeft = Math.max(0, Math.ceil(currentPlanet.appearTime - gameTime));
-                padTimer.textContent = currentPlanet.active ? '¡ACTIVO!' : `${timeLeft}s`;
+                padTimer.textContent = currentPlanet.active ? 'ACTIVO!' : `${timeLeft}s`;
                 padSize.textContent = planet ? planet.size_km.toLocaleString() + ' km' : '4.880 km';
             }
 
@@ -1523,9 +1764,14 @@
                 player.visible = true;
                 initPlayerPolygon();
                 enemies = [];
+                ufos = [];
+                ufosSpawnedThisLevel = 0;
                 trailParticles = [];
                 explosionAsteroids = [];
+                ufoExplosionParticles = [];
+                shockwaveRings = [];
                 frameCounter = 0;
+                ufoSpawnCounter = 0;
                 gameTime = 0;
                 gameWon = false;
                 currentPlanet.active = false;
@@ -1584,6 +1830,32 @@
                 return [];
             }
 
+            // ---------- Spawn OVNI ----------
+            function spawnUfo() {
+                if (!gameActive) return;
+                if (ufosSpawnedThisLevel >= MAX_UFOS_PER_LEVEL) return;
+                
+                const direction = Math.random() < 0.5 ? 1 : -1;
+                const size = 12 + Math.random() * 8;
+                const y = 50 + Math.random() * (H - 150);
+                const speed = 1.5 + Math.random() * 1.5;
+                const x = direction === 1 ? -size * 3 : W + size * 3;
+                
+                ufos.push({
+                    x: x,
+                    y: y,
+                    size: size,
+                    speed: speed * direction,
+                    direction: direction,
+                    collisionRadius: size * 0.8,
+                    rotation: 0,
+                    rotSpeed: (Math.random() - 0.5) * 0.02,
+                    wobble: Math.random() * Math.PI * 2,
+                    wobbleSpeed: 0.02 + Math.random() * 0.03,
+                });
+                ufosSpawnedThisLevel++;
+            }
+
             // ---------- Colisiones ----------
             function spawnExplosionParticles(x, y, color, count) {
                 for (let j = 0; j < count; j++) {
@@ -1601,9 +1873,11 @@
                 }
             }
 
+            // ========== FUNCIÓN MODIFICADA: handleCollisions con colisión 100% ==========
             function handleCollisions() {
                 if (!gameActive) return;
 
+                // Colisión con planeta
                 if (currentPlanet.active && currentPlanet.y < H + 100 && !currentPlanet.destroyed) {
                     const dx = player.x - currentPlanet.x;
                     const dy = player.y - currentPlanet.y;
@@ -1621,19 +1895,23 @@
                         spawnExplosionParticles(currentPlanet.x, currentPlanet.y, '#ffaa00', 10);
                         spawnExplosionParticles(player.x, player.y, '#4fc3f7', 30);
                         spawnExplosionParticles(player.x, player.y, '#81d4fa', 20);
+                        
+                        spawnShockwaveRing(currentPlanet.x, currentPlanet.y, radius * 8, currentPlanet.colors[0], 60);
+                        spawnShockwaveRing(currentPlanet.x, currentPlanet.y, radius * 6, '#ffffff', 50);
+                        
                         player.visible = false;
                         const isLastPlanet = currentPlanetIndex >= PLANETS.length - 1;
                         
                         let msgHtml;
                         if (isLastPlanet) {
-                            msgHtml = '🌌 ¡SISTEMA SOLAR DESTRUIDO!<br><small>¡Has completado todos los planetas!</small>';
+                            msgHtml = '¡SISTEMA SOLAR DESTRUIDO!<br><small>¡Has completado todos los planetas!</small>';
                             showGameOverMessage(msgHtml, true);
                             setTimeout(() => {
                                 resetBtn.classList.add('visible');
                                 nextLevelBtn.classList.remove('visible');
                             }, 3500);
                         } else {
-                            msgHtml = `💥 ¡${currentPlanet.name} DESTRUIDO!<br><small>¡Has completado el nivel!</small>`;
+                            msgHtml = `¡${currentPlanet.name} DESTRUIDO!<br><small>¡Has completado el nivel!</small>`;
                             showGameOverMessage(msgHtml, true);
                             setTimeout(() => {
                                 nextLevelBtn.classList.add('visible');
@@ -1645,6 +1923,7 @@
                     }
                 }
 
+                // Colisión entre asteroides enemigos
                 for (let i = 0; i < enemies.length; i++) {
                     for (let j = i + 1; j < enemies.length; j++) {
                         const a = enemies[i];
@@ -1669,6 +1948,7 @@
                     }
                 }
 
+                // Colisión del jugador con asteroides enemigos (con colisión 100%)
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     const enemy = enemies[i];
                     if (checkCollision(player, enemy)) {
@@ -1688,7 +1968,7 @@
                             player.polygon = [];
                             gameActive = false;
                             gameOverFlag = true;
-                            const msgHtml = '💥 FRACASO<br><small>Tu asteroide se desintegró</small>';
+                            const msgHtml = 'FRACASO<br><small>Tu asteroide se desintegró</small>';
                             showGameOverMessage(msgHtml, false);
                             setTimeout(() => {
                                 resetBtn.classList.add('visible');
@@ -1703,7 +1983,8 @@
                         player.radius = player.baseRadius * (0.7 + 0.3 * (player.structure / 5));
                         player.collisionRadius = player.radius * 0.8;
                         player.polygon = generateIrregularPolygon(player.radius, 8 + Math.floor(player.structure * 1.5), 0.5);
-                        player.collisionRadius = calculateAverageRadius(player.polygon) * 0.85;
+                        // Colisión al 100%
+                        player.collisionRadius = calculateAverageRadius(player.polygon);
                         player.visible = true;
                         enemyBaseSpeed += 1;
                         spawnExplosionParticles(player.x, player.y, '#81d4fa', 10);
@@ -1712,9 +1993,48 @@
                         updatePadInfo();
                     }
                 }
+
+                // Colisión del jugador con OVNI
+                for (let i = ufos.length - 1; i >= 0; i--) {
+                    const ufo = ufos[i];
+                    if (checkCollision(player, ufo)) {
+                        player.structure = Math.min(5, player.structure + 1);
+                        player.radius = player.baseRadius * (0.7 + 0.3 * (player.structure / 5));
+                        player.collisionRadius = player.radius * 0.8;
+                        player.polygon = generateIrregularPolygon(player.radius, 8 + Math.floor(player.structure * 1.5), 0.5);
+                        player.collisionRadius = calculateAverageRadius(player.polygon);
+                        player.visible = true;
+                        
+                        playUfoSound();
+                        spawnUfoExplosion(ufo.x, ufo.y);
+                        spawnExplosionParticles(ufo.x, ufo.y, '#00ff88', 20);
+                        spawnExplosionParticles(ufo.x, ufo.y, '#00ffcc', 15);
+                        
+                        ufos.splice(i, 1);
+                        updatePadInfo();
+                    }
+                }
+
+                // Colisión de OVNIs con asteroides enemigos
+                for (let i = ufos.length - 1; i >= 0; i--) {
+                    const ufo = ufos[i];
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const enemy = enemies[j];
+                        if (checkCollision(ufo, enemy)) {
+                            spawnExplosionParticles(enemy.x, enemy.y, '#ff6b35', 15);
+                            spawnExplosionParticles(enemy.x, enemy.y, '#ffaa33', 10);
+                            enemies.splice(j, 1);
+                            
+                            spawnUfoExplosion(ufo.x, ufo.y);
+                            spawnExplosionParticles(ufo.x, ufo.y, '#00ff88', 15);
+                            ufos.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
             }
 
-            // ========== SPAWN ENEMIGOS CON COLISIÓN PROPORCIONAL A SU FORMA ==========
+            // ---------- Spawn enemigos ----------
             function spawnEnemy() {
                 if (!gameActive) return;
                 const radius = 12 + Math.random() * 20;
@@ -1724,14 +2044,13 @@
                 const vertices = 6 + Math.floor(Math.random() * 7);
                 const irregularity = 0.4 + Math.random() * 0.4;
                 const polygon = generateIrregularPolygon(radius, vertices, irregularity);
-                // Calcular el radio de colisión basado en la forma real del asteroide
-                const collisionRadius = calculateAverageRadius(polygon) * 0.85;
+                const collisionRadius = calculateAverageRadius(polygon);
                 const colorSet = ASTEROID_COLORS[currentColorIndex];
                 const color = colorSet[Math.floor(Math.random() * colorSet.length)];
                 enemies.push({
                     x, y,
                     radius,
-                    collisionRadius: collisionRadius, // Ahora es proporcional a su forma
+                    collisionRadius: collisionRadius,
                     speedX,
                     speedY: enemyBaseSpeed,
                     polygon,
@@ -1751,6 +2070,20 @@
                     e.rotation += e.rotSpeed;
                     if (e.y > H + 50 || e.x < -50 || e.x > W + 50) {
                         enemies.splice(i, 1);
+                    }
+                }
+            }
+
+            function updateUfos() {
+                for (let i = ufos.length - 1; i >= 0; i--) {
+                    const ufo = ufos[i];
+                    ufo.x += ufo.speed;
+                    ufo.wobble += ufo.wobbleSpeed;
+                    ufo.y += Math.sin(ufo.wobble) * 0.5;
+                    ufo.rotation += ufo.rotSpeed;
+                    
+                    if (ufo.x < -100 || ufo.x > W + 100) {
+                        ufos.splice(i, 1);
                     }
                 }
             }
@@ -1826,12 +2159,18 @@
                     ctx.font = "bold 16px monospace";
                     ctx.textAlign = "center";
                     const timeLeft = Math.max(0, Math.ceil(currentPlanet.appearTime - gameTime));
-                    ctx.fillText(`🌍 ${currentPlanet.name} en ${timeLeft}s`, 200, 30);
+                    ctx.fillText(`${currentPlanet.name} en ${timeLeft}s`, 200, 30);
                     ctx.textAlign = "left";
                 }
 
                 drawExplosionAsteroids();
                 drawTrailParticles();
+                drawUfoExplosionParticles();
+                drawShockwaveRings();
+
+                for (let ufo of ufos) {
+                    drawUfo(ctx, ufo);
+                }
 
                 for (let e of enemies) {
                     drawPlayerPolygon(ctx, e.x, e.y, e.polygon, e.color, e.shadowColor || "#cc5500", e.rotation, false);
@@ -1853,19 +2192,33 @@
                         currentPlanet.y += currentPlanet.speed;
                     }
                     frameCounter++;
+                    ufoSpawnCounter++;
+                    
                     if (frameCounter >= spawnRate) {
                         frameCounter = 0;
                         spawnEnemy();
                     }
+                    
+                    if (ufoSpawnCounter >= ufoSpawnInterval) {
+                        ufoSpawnCounter = 0;
+                        spawnUfo();
+                        ufoSpawnInterval = 450 + Math.random() * 450;
+                    }
+                    
                     updatePlayer();
                     updateEnemies();
+                    updateUfos();
                     updateTrailParticles();
                     updateExplosionAsteroids();
+                    updateUfoExplosionParticles();
+                    updateShockwaveRings();
                     handleCollisions();
                     updatePadInfo();
                 } else {
                     updateTrailParticles();
                     updateExplosionAsteroids();
+                    updateUfoExplosionParticles();
+                    updateShockwaveRings();
                 }
                 draw();
                 requestAnimationFrame(loop);
