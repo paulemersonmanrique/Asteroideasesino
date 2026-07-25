@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>☄️ Asteroide Asesino - Sistema Solar</title>
     <style>
         * {
@@ -10,6 +10,8 @@
             padding: 0;
             box-sizing: border-box;
             user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
         }
         body {
             min-height: 100vh;
@@ -18,12 +20,18 @@
             align-items: center;
             background: #0a0f1e;
             font-family: 'Segoe UI', system-ui, sans-serif;
+            touch-action: none;
+            overflow: hidden;
         }
         .game-wrapper {
             background: #141a2b;
-            padding: 20px 20px 25px;
+            padding: 20px 20px 20px 20px;
             border-radius: 40px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), inset 0 0 0 1px #3e4b66;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         canvas {
             display: block;
@@ -34,26 +42,30 @@
             border-radius: 24px;
             box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.7), 0 10px 20px rgba(0, 0, 0, 0.6);
             cursor: none;
+            touch-action: none;
+            flex-shrink: 0;
         }
         .ui-panel {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 16px;
-            padding: 0 6px;
+            margin-top: 12px;
+            padding: 0 4px;
             color: #b7d0f0;
             text-shadow: 0 2px 3px #00000088;
             font-weight: 600;
             font-size: 1.1rem;
             letter-spacing: 0.3px;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
+            width: 100%;
+            max-width: 400px;
         }
         .stats {
             display: flex;
-            gap: 18px;
+            gap: 14px;
             background: #0e1424cc;
-            padding: 6px 16px;
+            padding: 4px 12px;
             border-radius: 60px;
             backdrop-filter: blur(2px);
             border: 1px solid #3e4f70;
@@ -62,30 +74,31 @@
         .stats span {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.9rem;
+            gap: 4px;
+            font-size: 0.8rem;
         }
         .stats i {
             font-style: normal;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
         button {
             background: #2f3f62;
             border: none;
             color: white;
             font-weight: bold;
-            font-size: 1rem;
-            padding: 6px 16px;
+            font-size: 0.85rem;
+            padding: 4px 14px;
             border-radius: 60px;
             cursor: pointer;
-            box-shadow: 0 6px 0 #0c121f, 0 4px 12px #00000066;
+            box-shadow: 0 5px 0 #0c121f, 0 4px 12px #00000066;
             transition: all 0.08s linear;
             letter-spacing: 0.5px;
             border: 1px solid #5f77a0;
             display: none;
+            touch-action: manipulation;
         }
         button:active {
-            transform: translateY(5px);
+            transform: translateY(4px);
             box-shadow: 0 1px 0 #0c121f;
         }
         button.visible {
@@ -94,16 +107,16 @@
         button.next-level {
             background: #4a7a3a;
             border-color: #6aaa5a;
-            box-shadow: 0 6px 0 #2a4a1a, 0 4px 20px #4a7a3a66;
+            box-shadow: 0 5px 0 #2a4a1a, 0 4px 20px #4a7a3a66;
             animation: pulse-glow 1.5s ease-in-out infinite;
         }
         button.next-level:active {
-            transform: translateY(5px);
+            transform: translateY(4px);
             box-shadow: 0 1px 0 #2a4a1a;
         }
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 6px 0 #2a4a1a, 0 4px 20px #4a7a3a66; }
-            50% { box-shadow: 0 6px 0 #2a4a1a, 0 4px 40px #6aaa5aaa; }
+            0%, 100% { box-shadow: 0 5px 0 #2a4a1a, 0 4px 20px #4a7a3a66; }
+            50% { box-shadow: 0 5px 0 #2a4a1a, 0 4px 40px #6aaa5aaa; }
         }
         #gameOverMsg {
             position: absolute;
@@ -143,47 +156,190 @@
         }
         .timer {
             color: #ffbb77;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             background: #0e142488;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 30px;
             border: 1px solid #ff8833;
         }
         .level-indicator {
             color: #ffcc88;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             background: #0e142488;
-            padding: 4px 14px;
+            padding: 3px 12px;
             border-radius: 30px;
             border: 1px solid #ff8833;
             font-weight: bold;
         }
         .size-info {
             color: #8899bb;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             background: #0e142488;
-            padding: 2px 10px;
+            padding: 2px 8px;
             border-radius: 30px;
             border: 1px solid #3e4f70;
         }
         .color-indicator {
             color: #8899bb;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             background: #0e142488;
-            padding: 2px 10px;
+            padding: 2px 8px;
             border-radius: 30px;
             border: 1px solid #3e4f70;
+        }
+
+        /* ===== PAD ANALÓGICO - FUERA DEL CANVAS ===== */
+        .analog-pad-container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+            padding: 0 10px;
+        }
+        .analog-pad {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(60, 80, 120, 0.5), rgba(20, 30, 50, 0.85));
+            border: 2px solid rgba(100, 140, 200, 0.3);
+            box-shadow: 0 0 40px rgba(50, 100, 200, 0.1), inset 0 0 40px rgba(0, 0, 0, 0.5);
+            touch-action: none;
+            pointer-events: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .analog-pad .center {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(100, 180, 255, 0.5), rgba(40, 80, 160, 0.2));
+            border: 1px solid rgba(100, 180, 255, 0.15);
+            pointer-events: none;
+            transition: all 0.05s;
+        }
+        .analog-pad .thumb {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(120, 200, 255, 0.5), rgba(40, 80, 180, 0.65));
+            border: 2px solid rgba(100, 180, 255, 0.35);
+            box-shadow: 0 0 25px rgba(50, 150, 255, 0.2), inset 0 -5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transition: none;
+            transform: translate(-50%, -50%);
+            touch-action: none;
+        }
+        .analog-pad .thumb::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.4), rgba(100, 180, 255, 0.1));
+        }
+        .analog-pad .direction-indicator {
+            position: absolute;
+            color: rgba(100, 180, 255, 0.12);
+            font-size: 16px;
+            pointer-events: none;
+            font-weight: bold;
+        }
+        .analog-pad .dir-up { top: 6px; left: 50%; transform: translateX(-50%); }
+        .analog-pad .dir-down { bottom: 6px; left: 50%; transform: translateX(-50%); }
+        .analog-pad .dir-left { left: 6px; top: 50%; transform: translateY(-50%); }
+        .analog-pad .dir-right { right: 6px; top: 50%; transform: translateY(-50%); }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .analog-pad {
+                width: 120px;
+                height: 120px;
+            }
+            .analog-pad .thumb {
+                width: 40px;
+                height: 40px;
+            }
+            .analog-pad .center {
+                width: 14px;
+                height: 14px;
+            }
+            .game-wrapper {
+                padding: 12px 12px 12px 12px;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 400/600;
+                max-width: 400px;
+            }
+            .stats span {
+                font-size: 0.7rem;
+                gap: 3px;
+            }
+            .level-indicator, .timer, .size-info, .color-indicator {
+                font-size: 0.65rem;
+                padding: 2px 8px;
+            }
+            button {
+                font-size: 0.75rem;
+                padding: 3px 10px;
+            }
+            .ui-panel {
+                gap: 4px;
+            }
+            .analog-pad-container {
+                margin-top: 8px;
+            }
+        }
+        @media (max-width: 400px) {
+            .analog-pad {
+                width: 100px;
+                height: 100px;
+            }
+            .analog-pad .thumb {
+                width: 34px;
+                height: 34px;
+            }
+            .analog-pad .center {
+                width: 12px;
+                height: 12px;
+            }
+            .analog-pad .direction-indicator {
+                font-size: 12px;
+            }
+            .stats span {
+                font-size: 0.6rem;
+            }
+            .level-indicator, .timer, .size-info, .color-indicator {
+                font-size: 0.55rem;
+                padding: 1px 6px;
+            }
+            button {
+                font-size: 0.65rem;
+                padding: 2px 8px;
+            }
         }
     </style>
 </head>
 <body>
 
     <div class="game-wrapper">
+        <!-- CANVAS -->
         <div class="relative">
             <canvas id="gameCanvas" width="400" height="600"></canvas>
             <div id="gameOverMsg">💥 IMPACTO<br><small>Mensaje</small></div>
         </div>
 
+        <!-- UI PANEL -->
         <div class="ui-panel">
             <div class="stats">
                 <span>⚡ <span id="velDisplay">100</span>%</span>
@@ -195,7 +351,19 @@
             <div class="color-indicator" id="colorDisplay">🎨 Naranja</div>
             <div class="timer" id="timerDisplay">⏱ 0s</div>
             <button id="resetBtn">⟳ Reiniciar</button>
-            <button id="nextLevelBtn" class="next-level">🚀 Siguiente Planeta</button>
+            <button id="nextLevelBtn" class="next-level">🚀 Siguiente</button>
+        </div>
+
+        <!-- PAD ANALÓGICO - FUERA DEL CANVAS -->
+        <div class="analog-pad-container">
+            <div class="analog-pad" id="analogPad">
+                <span class="direction-indicator dir-up">▲</span>
+                <span class="direction-indicator dir-down">▼</span>
+                <span class="direction-indicator dir-left">◄</span>
+                <span class="direction-indicator dir-right">►</span>
+                <div class="center"></div>
+                <div class="thumb" id="thumb"></div>
+            </div>
         </div>
     </div>
 
@@ -217,7 +385,109 @@
             const W = 400,
                 H = 600;
 
-            // ========== SISTEMA DE PLANETAS 130% MÁS GRANDES ==========
+            // ========== CONTROL DEL PAD ANALÓGICO ==========
+            const analogPad = document.getElementById('analogPad');
+            const thumb = document.getElementById('thumb');
+            let isTouching = false;
+            const PAD_RADIUS = 70;
+            const THUMB_RADIUS = 24;
+            
+            let padX = 0;
+            let padY = 0;
+
+            function getPadCenter() {
+                const rect = analogPad.getBoundingClientRect();
+                return {
+                    cx: rect.left + rect.width / 2,
+                    cy: rect.top + rect.height / 2,
+                    maxDist: Math.min(rect.width, rect.height) / 2 - THUMB_RADIUS,
+                    width: rect.width,
+                    height: rect.height
+                };
+            }
+
+            function updateThumbPosition(clientX, clientY) {
+                const { cx, cy, maxDist, width, height } = getPadCenter();
+                
+                let dx = clientX - cx;
+                let dy = clientY - cy;
+                const dist = Math.hypot(dx, dy);
+                
+                if (dist > maxDist) {
+                    dx = (dx / dist) * maxDist;
+                    dy = (dy / dist) * maxDist;
+                }
+                
+                thumb.style.left = (width / 2 + dx) + 'px';
+                thumb.style.top = (height / 2 + dy) + 'px';
+                
+                padX = dx / maxDist;
+                padY = dy / maxDist;
+                if (dist < 5) {
+                    padX = 0;
+                    padY = 0;
+                }
+            }
+
+            function resetThumb() {
+                const rect = analogPad.getBoundingClientRect();
+                thumb.style.left = (rect.width / 2) + 'px';
+                thumb.style.top = (rect.height / 2) + 'px';
+                padX = 0;
+                padY = 0;
+                isTouching = false;
+            }
+
+            // Eventos táctiles
+            analogPad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                isTouching = true;
+                updateThumbPosition(touch.clientX, touch.clientY);
+            }, { passive: false });
+
+            analogPad.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isTouching) return;
+                const touch = e.touches[0];
+                updateThumbPosition(touch.clientX, touch.clientY);
+            }, { passive: false });
+
+            analogPad.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                resetThumb();
+            }, { passive: false });
+
+            analogPad.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                resetThumb();
+            }, { passive: false });
+
+            // Eventos de mouse
+            let mouseDown = false;
+            analogPad.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                mouseDown = true;
+                isTouching = true;
+                updateThumbPosition(e.clientX, e.clientY);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!mouseDown) return;
+                updateThumbPosition(e.clientX, e.clientY);
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (mouseDown) {
+                    mouseDown = false;
+                    resetThumb();
+                }
+            });
+
+            // Inicializar pulgar en el centro
+            resetThumb();
+
+            // ========== SISTEMA DE PLANETAS ==========
             const PLANETS = [
                 { name: '☿ Mercurio', color: '#b5a8a0', size_km: 4880, appearTime: 22, speed: 0.45 },
                 { name: '♀ Venus', color: '#e8cda0', size_km: 12104, appearTime: 25, speed: 0.40 },
@@ -255,15 +525,13 @@
             }
 
             let currentPlanetIndex = 0;
-            let currentLevel = 1;
             let enemyBaseSpeed = 2;
             let spawnRate = 35;
             let currentColorIndex = 0;
 
-            // ---------- FONDO EN BUCLE INFINITO ----------
+            // ---------- FONDO ----------
             let starOffset = 0;
             const STAR_SPEED = 1;
-
             const stars = [];
             for (let i = 0; i < 100; i++) {
                 stars.push({
@@ -306,7 +574,6 @@
                 try {
                     initAudio();
                     const now = audioCtx.currentTime;
-                    
                     const bufferSize = audioCtx.sampleRate * 0.4;
                     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                     const data = buffer.getChannelData(0);
@@ -314,66 +581,50 @@
                         const env = Math.exp(-i / (bufferSize * 0.15));
                         data[i] = (Math.random() * 2 - 1) * env * 0.9;
                     }
-                    
                     const noise = audioCtx.createBufferSource();
                     noise.buffer = buffer;
-                    
                     const filter = audioCtx.createBiquadFilter();
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(1500, now);
                     filter.frequency.exponentialRampToValueAtTime(200, now + 0.3);
                     filter.Q.value = 1.5;
-                    
                     const gain = audioCtx.createGain();
                     gain.gain.setValueAtTime(0.6, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    
                     noise.connect(filter);
                     filter.connect(gain);
                     gain.connect(musicGain || audioCtx.destination);
-                    
                     noise.start(now);
                     noise.stop(now + 0.4);
-                    
                     const osc = audioCtx.createOscillator();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(80, now);
                     osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
-                    
                     const gain2 = audioCtx.createGain();
                     gain2.gain.setValueAtTime(0.4, now);
                     gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    
                     osc.connect(gain2);
                     gain2.connect(musicGain || audioCtx.destination);
-                    
                     osc.start(now);
                     osc.stop(now + 0.3);
-                    
                     const osc2 = audioCtx.createOscillator();
                     osc2.type = 'square';
                     osc2.frequency.setValueAtTime(300, now);
                     osc2.frequency.exponentialRampToValueAtTime(100, now + 0.2);
-                    
                     const gain3 = audioCtx.createGain();
                     gain3.gain.setValueAtTime(0.15, now);
                     gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    
                     osc2.connect(gain3);
                     gain3.connect(musicGain || audioCtx.destination);
-                    
                     osc2.start(now);
                     osc2.stop(now + 0.2);
-                } catch(e) {
-                    console.log('Audio no disponible');
-                }
+                } catch(e) {}
             }
 
             function playCollisionSound() {
                 try {
                     initAudio();
                     const now = audioCtx.currentTime;
-                    
                     const bufferSize = audioCtx.sampleRate * 0.15;
                     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                     const data = buffer.getChannelData(0);
@@ -381,43 +632,32 @@
                         const env = Math.exp(-i / (bufferSize * 0.3));
                         data[i] = (Math.random() * 2 - 1) * env * 0.8;
                     }
-                    
                     const noise = audioCtx.createBufferSource();
                     noise.buffer = buffer;
-                    
                     const filter = audioCtx.createBiquadFilter();
                     filter.type = 'bandpass';
                     filter.frequency.value = 800 + Math.random() * 600;
                     filter.Q.value = 2;
-                    
                     const gain = audioCtx.createGain();
                     gain.gain.setValueAtTime(0.5, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    
                     noise.connect(filter);
                     filter.connect(gain);
                     gain.connect(musicGain || audioCtx.destination);
-                    
                     noise.start(now);
                     noise.stop(now + 0.15);
-                    
                     const osc = audioCtx.createOscillator();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(150, now);
                     osc.frequency.exponentialRampToValueAtTime(50, now + 0.12);
-                    
                     const gain2 = audioCtx.createGain();
                     gain2.gain.setValueAtTime(0.3, now);
                     gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                    
                     osc.connect(gain2);
                     gain2.connect(musicGain || audioCtx.destination);
-                    
                     osc.start(now);
                     osc.stop(now + 0.12);
-                } catch(e) {
-                    console.log('Audio no disponible');
-                }
+                } catch(e) {}
             }
 
             function startAmbientMusic() {
@@ -425,73 +665,52 @@
                     initAudio();
                     if (musicActive) return;
                     musicActive = true;
-                    
                     let noteIndex = 0;
                     const notes = [48, 52, 50, 55, 52, 58, 46, 53];
                     const durations = [1.2, 1.6, 1.4, 1.8, 1.3, 2.0, 1.5, 1.7];
-                    
                     function playNote() {
                         if (!musicActive) return;
-                        
                         try {
                             const now = audioCtx.currentTime;
                             const freq = notes[noteIndex % notes.length] * 1.8;
                             const dur = durations[noteIndex % durations.length] * 0.6;
-                            
                             const osc = audioCtx.createOscillator();
                             osc.type = 'sine';
                             osc.frequency.setValueAtTime(freq, now);
                             osc.frequency.exponentialRampToValueAtTime(freq * 0.96, now + dur);
-                            
                             const lfo = audioCtx.createOscillator();
                             lfo.frequency.value = 0.3 + Math.random() * 0.3;
                             lfo.type = 'sawtooth';
-                            
                             const lfoGain = audioCtx.createGain();
                             lfoGain.gain.value = 2.5;
-                            
                             lfo.connect(lfoGain);
                             lfoGain.connect(osc.frequency);
-                            
                             const gain = audioCtx.createGain();
                             gain.gain.setValueAtTime(0.08, now);
                             gain.gain.exponentialRampToValueAtTime(0.02, now + dur);
-                            
                             osc.connect(gain);
                             gain.connect(musicGain || audioCtx.destination);
-                            
                             osc.start(now);
                             osc.stop(now + dur);
                             lfo.start(now);
                             lfo.stop(now + dur);
-                            
                             const osc2 = audioCtx.createOscillator();
                             osc2.type = 'sawtooth';
                             osc2.frequency.setValueAtTime(freq * 1.02 + 10, now);
-                            
                             const gain2 = audioCtx.createGain();
                             gain2.gain.setValueAtTime(0.03, now);
                             gain2.gain.exponentialRampToValueAtTime(0.005, now + dur);
-                            
                             osc2.connect(gain2);
                             gain2.connect(musicGain || audioCtx.destination);
-                            
                             osc2.start(now);
                             osc2.stop(now + dur);
-                            
                             noteIndex++;
-                            
                             const nextDelay = 0.6 + Math.random() * 1.5;
                             musicInterval = setTimeout(playNote, nextDelay * 1000);
-                        } catch(e) {
-                            console.log('Nota fallida');
-                        }
+                        } catch(e) {}
                     }
-                    
                     setTimeout(playNote, 400);
-                } catch(e) {
-                    console.log('Audio no disponible');
-                }
+                } catch(e) {}
             }
 
             function stopAmbientMusic() {
@@ -518,16 +737,15 @@
                 } catch(e) {}
             });
 
-            // ========== FIN SISTEMA DE AUDIO ==========
+            // ========== FIN AUDIO ==========
 
-            // ---------- Sistema de partículas y asteroides de explosión ----------
+            // ---------- Sistema de partículas ----------
             let trailParticles = [];
             let explosionAsteroids = [];
 
             function spawnTrailParticle(x, y, color) {
                 trailParticles.push({
-                    x: x,
-                    y: y,
+                    x, y,
                     vx: (Math.random() - 0.5) * 0.8,
                     vy: 1.0 + Math.random() * 2.0,
                     life: 1.0,
@@ -537,7 +755,7 @@
                 });
             }
 
-            function spawnExplosionAsteroids(x, y, count, radius, planetColor) {
+            function spawnExplosionAsteroids(x, y, count, radius) {
                 const colorSet = ASTEROID_COLORS[currentColorIndex];
                 for (let j = 0; j < count; j++) {
                     const angle = Math.random() * Math.PI * 2;
@@ -546,7 +764,6 @@
                     const vertices = 6 + Math.floor(Math.random() * 5);
                     const polygon = generateIrregularPolygon(size, vertices, 0.5);
                     const color = colorSet[Math.floor(Math.random() * colorSet.length)];
-                    
                     explosionAsteroids.push({
                         x: x + (Math.random() - 0.5) * radius * 0.3,
                         y: y + (Math.random() - 0.5) * radius * 0.3,
@@ -554,8 +771,8 @@
                         vy: Math.sin(angle) * speed * (0.6 + Math.random() * 0.4) - 0.5,
                         rotation: Math.random() * Math.PI * 2,
                         rotSpeed: (Math.random() - 0.5) * 0.06,
-                        polygon: polygon,
-                        color: color,
+                        polygon,
+                        color,
                         shadowColor: "#cc5500",
                         life: 1.0,
                         decay: 0.002 + Math.random() * 0.004,
@@ -573,7 +790,6 @@
                     a.vy += a.gravity;
                     a.rotation += a.rotSpeed;
                     a.life -= a.decay;
-                    
                     if (a.life <= 0 || a.y > H + 100 || a.x < -100 || a.x > W + 100) {
                         explosionAsteroids.splice(i, 1);
                     }
@@ -587,10 +803,8 @@
                     ctx.globalAlpha = alpha;
                     ctx.translate(a.x, a.y);
                     ctx.rotate(a.rotation);
-                    
                     ctx.shadowColor = a.shadowColor || "#cc5500";
                     ctx.shadowBlur = 12;
-                    
                     ctx.fillStyle = a.color;
                     ctx.beginPath();
                     ctx.moveTo(a.polygon[0].x, a.polygon[0].y);
@@ -599,12 +813,10 @@
                     }
                     ctx.closePath();
                     ctx.fill();
-                    
                     ctx.shadowBlur = 0;
                     ctx.strokeStyle = "rgba(30,20,15,0.4)";
                     ctx.lineWidth = 0.8;
                     ctx.stroke();
-                    
                     ctx.restore();
                     ctx.globalAlpha = 1;
                 }
@@ -639,7 +851,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // ---------- Funciones para polígonos irregulares ----------
+            // ---------- Funciones para polígonos ----------
             function generateIrregularPolygon(radius, vertices, irregularity) {
                 const points = [];
                 for (let i = 0; i < vertices; i++) {
@@ -653,7 +865,6 @@
                 return points;
             }
 
-            // Generar continentes (estáticos)
             let continentPoints = [];
 
             function generateStaticContinents() {
@@ -666,16 +877,10 @@
                     { cx: -30, cy: 5, r: 18, v: 6, irr: 0.5 },
                     { cx: 5, cy: -35, r: 15, v: 5, irr: 0.5 },
                 ];
-
                 for (let data of continentData) {
-                    const points = generateContinent(
-                        0, 0,
-                        data.r,
-                        data.v,
-                        data.irr
-                    );
+                    const points = generateContinent(0, 0, data.r, data.v, data.irr);
                     continentPoints.push({
-                        points: points,
+                        points,
                         offsetX: data.cx,
                         offsetY: data.cy,
                         color: `hsl(${110 + Math.random() * 30}, ${50 + Math.random() * 30}%, ${35 + Math.random() * 25}%)`
@@ -698,13 +903,10 @@
 
             function drawSolidPolygon(ctx, points, color, shadowColor) {
                 if (points.length < 3) return;
-
                 ctx.save();
                 ctx.shadowColor = shadowColor || "transparent";
                 ctx.shadowBlur = 8;
-
                 ctx.fillStyle = color || "#8a7a6a";
-                
                 ctx.beginPath();
                 ctx.moveTo(points[0].x, points[0].y);
                 for (let i = 1; i < points.length; i++) {
@@ -712,28 +914,22 @@
                 }
                 ctx.closePath();
                 ctx.fill();
-
                 ctx.shadowBlur = 0;
                 ctx.strokeStyle = "rgba(20, 60, 20, 0.4)";
                 ctx.lineWidth = 1;
                 ctx.stroke();
-
                 ctx.restore();
                 ctx.shadowBlur = 0;
             }
 
             function drawPlayerPolygon(ctx, x, y, points, color, shadowColor, rotation, glow, glowColor) {
                 if (points.length < 3) return;
-
                 ctx.save();
                 ctx.translate(x, y);
                 ctx.rotate(rotation || 0);
-
                 ctx.shadowColor = shadowColor || "#b07c4a";
                 ctx.shadowBlur = glow ? 30 : 15;
-
                 ctx.fillStyle = color || "#8a7a6a";
-                
                 ctx.beginPath();
                 ctx.moveTo(points[0].x, points[0].y);
                 for (let i = 1; i < points.length; i++) {
@@ -741,12 +937,10 @@
                 }
                 ctx.closePath();
                 ctx.fill();
-
                 ctx.shadowBlur = 0;
                 ctx.strokeStyle = "rgba(30, 20, 15, 0.7)";
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
-
                 if (glow) {
                     ctx.shadowBlur = 0;
                     ctx.strokeStyle = glowColor || "rgba(255, 200, 100, 0.4)";
@@ -759,14 +953,12 @@
                     ctx.closePath();
                     ctx.stroke();
                 }
-
                 ctx.restore();
                 ctx.shadowBlur = 0;
             }
 
             function drawPlanet(ctx, planet, radius) {
                 const { x, y, color, name } = planet;
-                
                 ctx.shadowColor = color;
                 ctx.shadowBlur = 60;
                 ctx.beginPath();
@@ -774,22 +966,17 @@
                 ctx.fillStyle = "rgba(255,255,255,0.03)";
                 ctx.fill();
                 ctx.shadowBlur = 0;
-
                 ctx.shadowColor = color;
                 ctx.shadowBlur = 40;
                 ctx.beginPath();
                 ctx.arc(x, y, radius, 0, Math.PI * 2);
-                const grad = ctx.createRadialGradient(
-                    x - radius * 0.2, y - radius * 0.2, 0,
-                    x, y, radius
-                );
+                const grad = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.2, 0, x, y, radius);
                 grad.addColorStop(0, lightenColor(color, 40));
                 grad.addColorStop(0.5, color);
                 grad.addColorStop(1, darkenColor(color, 40));
                 ctx.fillStyle = grad;
                 ctx.fill();
                 ctx.shadowBlur = 0;
-
                 if (name.includes('Júpiter') || name.includes('Saturno') || name.includes('Urano') || name.includes('Neptuno')) {
                     ctx.strokeStyle = color + '44';
                     ctx.lineWidth = 2;
@@ -799,7 +986,6 @@
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
-
                 if (name === '♄ Saturno') {
                     ctx.strokeStyle = '#d4c48a66';
                     ctx.lineWidth = 3;
@@ -837,7 +1023,7 @@
                 return `rgb(${r},${g},${b})`;
             }
 
-            // ---------- Función de colisión ----------
+            // ---------- Colisiones ----------
             function checkCollision(a, b) {
                 const dx = a.x - b.x;
                 const dy = a.y - b.y;
@@ -846,13 +1032,13 @@
                 return dist < threshold;
             }
 
-            // ---------- Jugador (5 vidas) ----------
+            // ---------- Jugador ----------
             const player = {
                 x: 200,
                 y: 500,
                 radius: 36,
                 collisionRadius: 36 * 0.8,
-                speed: 1,
+                speed: 1.5,
                 structure: 5,
                 baseRadius: 36,
                 kills: 0,
@@ -870,7 +1056,7 @@
             const playerGlowColor = "rgba(79, 195, 247, 0.6)";
             const trailColor = "#81d4fa";
 
-            // ---------- Planeta actual ----------
+            // ---------- Planeta ----------
             let currentPlanet = {
                 x: 200,
                 y: -80,
@@ -900,27 +1086,16 @@
                 currentPlanet.destroyed = false;
                 levelDisplay.textContent = planet.name;
                 sizeDisplay.textContent = planet.size_km.toLocaleString() + ' km';
-                
                 currentColorIndex = index % ASTEROID_COLORS.length;
-                const colorSet = ASTEROID_COLORS[currentColorIndex];
                 const colorName = COLOR_NAMES[currentColorIndex % COLOR_NAMES.length];
                 colorDisplay.textContent = '🎨 ' + colorName;
             }
 
             generateStaticContinents();
 
-            // Asteroides enemigos
             let enemies = [];
             let frameCounter = 0;
-
-            // Control de teclas
-            let keys = {
-                up: false,
-                down: false,
-                left: false,
-                right: false
-            };
-
+            let keys = { up: false, down: false, left: false, right: false };
             let gameActive = true;
             let gameOverFlag = false;
             let gameTime = 0;
@@ -937,47 +1112,37 @@
                 player.rotation = 0;
                 player.visible = true;
                 initPlayerPolygon();
-
                 enemies = [];
                 trailParticles = [];
                 explosionAsteroids = [];
                 frameCounter = 0;
                 gameTime = 0;
                 gameWon = false;
-
                 currentPlanet.active = false;
                 currentPlanet.y = -80;
                 currentPlanet.destroyed = false;
-                
                 const planet = PLANETS[currentPlanetIndex];
                 enemyBaseSpeed = 2 + currentPlanetIndex * 0.3;
                 spawnRate = Math.max(18, 35 - currentPlanetIndex * 1.5);
-
                 gameActive = true;
                 gameOverFlag = false;
-
                 gameOverDiv.style.display = 'none';
                 gameOverDiv.classList.remove('win');
                 resetBtn.classList.remove('visible');
                 nextLevelBtn.classList.remove('visible');
-
                 keys.up = false;
                 keys.down = false;
                 keys.left = false;
                 keys.right = false;
-
                 levelDisplay.textContent = planet.name;
                 sizeDisplay.textContent = planet.size_km.toLocaleString() + ' km';
-                
-                const colorSet = ASTEROID_COLORS[currentColorIndex];
                 const colorName = COLOR_NAMES[currentColorIndex % COLOR_NAMES.length];
                 colorDisplay.textContent = '🎨 ' + colorName;
-                
                 updateUI();
-
                 if (!musicActive) {
                     startAmbientMusic();
                 }
+                resetThumb();
             }
 
             function updateUI() {
@@ -988,7 +1153,7 @@
                 timerDisplay.textContent = currentPlanet.active ? '🌍 ¡PLANETA!' : `⏱ ${timeLeft}s`;
             }
 
-            // ---------- Función para dividir asteroide ----------
+            // ---------- Dividir asteroide ----------
             function splitAsteroid(enemy, angle) {
                 if (enemy.radius > 10) {
                     const newRadius = enemy.radius * 0.5;
@@ -1000,9 +1165,7 @@
                             const newAngle = angle + dirOffset + (Math.random() - 0.5) * 0.5;
                             const speed = 0.8 + Math.random() * 1.2;
                             const newPolygon = generateIrregularPolygon(newRadius, 6 + Math.floor(Math.random() * 4), 0.4 + Math.random() * 0.3);
-                            
                             const color = colorSet[Math.floor(Math.random() * colorSet.length)];
-                            
                             fragments.push({
                                 x: enemy.x + Math.cos(newAngle) * 15,
                                 y: enemy.y + Math.sin(newAngle) * 15,
@@ -1011,7 +1174,7 @@
                                 speedX: Math.cos(newAngle) * speed + enemy.speedX * 0.2,
                                 speedY: Math.sin(newAngle) * speed + enemy.speedY * 0.2,
                                 polygon: newPolygon,
-                                color: color,
+                                color,
                                 shadowColor: "#cc5500",
                                 rotation: Math.random() * Math.PI * 2,
                                 rotSpeed: (Math.random() - 0.5) * 0.03,
@@ -1024,10 +1187,25 @@
             }
 
             // ---------- Colisiones ----------
+            function spawnExplosionParticles(x, y, color, count) {
+                for (let j = 0; j < count; j++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 3;
+                    trailParticles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 1,
+                        life: 0.6 + Math.random() * 0.3,
+                        decay: 0.01 + Math.random() * 0.02,
+                        size: 1.5 + Math.random() * 3,
+                        color
+                    });
+                }
+            }
+
             function handleCollisions() {
                 if (!gameActive) return;
 
-                // Colisión con el planeta
                 if (currentPlanet.active && currentPlanet.y < H + 100 && !currentPlanet.destroyed) {
                     const dx = player.x - currentPlanet.x;
                     const dy = player.y - currentPlanet.y;
@@ -1037,23 +1215,15 @@
                         gameOverFlag = true;
                         gameWon = true;
                         currentPlanet.destroyed = true;
-                        
                         playExplosionSound();
-                        
                         const radius = currentPlanet.radius;
                         const asteroidCount = Math.floor(25 + radius * 0.6);
-                        
-                        spawnExplosionAsteroids(currentPlanet.x, currentPlanet.y, asteroidCount, radius, currentPlanet.color);
-                        
-                        // Pequeña explosión de partículas para efecto visual
+                        spawnExplosionAsteroids(currentPlanet.x, currentPlanet.y, asteroidCount, radius);
                         spawnExplosionParticles(currentPlanet.x, currentPlanet.y, '#ff6b35', 15);
                         spawnExplosionParticles(currentPlanet.x, currentPlanet.y, '#ffaa00', 10);
-                        
-                        // Explosión del asteroide jugador
                         spawnExplosionParticles(player.x, player.y, '#4fc3f7', 30);
                         spawnExplosionParticles(player.x, player.y, '#81d4fa', 20);
                         player.visible = false;
-                        
                         const isLastPlanet = currentPlanetIndex >= PLANETS.length - 1;
                         gameOverDiv.style.display = 'block';
                         gameOverDiv.classList.add('win');
@@ -1066,13 +1236,11 @@
                             nextLevelBtn.classList.add('visible');
                             resetBtn.classList.remove('visible');
                         }
-                        
                         updateUI();
                         return;
                     }
                 }
 
-                // Colisión entre asteroides enemigos
                 for (let i = 0; i < enemies.length; i++) {
                     for (let j = i + 1; j < enemies.length; j++) {
                         const a = enemies[i];
@@ -1081,52 +1249,39 @@
                             const dx = a.x - b.x;
                             const dy = a.y - b.y;
                             const angle = Math.atan2(dy, dx);
-                            
                             playCollisionSound();
-                            
                             const midX = (a.x + b.x) / 2;
                             const midY = (a.y + b.y) / 2;
                             spawnExplosionParticles(midX, midY, '#ff6b35', 10);
                             spawnExplosionParticles(midX, midY, '#ffaa33', 7);
-                            
                             const fragmentsA = splitAsteroid(a, angle);
                             const fragmentsB = splitAsteroid(b, angle + Math.PI);
-                            
                             enemies.splice(j, 1);
                             enemies.splice(i, 1);
-                            
                             enemies.push(...fragmentsA);
                             enemies.push(...fragmentsB);
-                            
                             break;
                         }
                     }
                 }
 
-                // Colisión con jugador
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     const enemy = enemies[i];
                     if (checkCollision(player, enemy)) {
                         playCollisionSound();
-                        
                         const dx = player.x - enemy.x;
                         const dy = player.y - enemy.y;
                         const angle = Math.atan2(dy, dx);
-                        
                         spawnExplosionParticles(enemy.x, enemy.y, '#ff6b35', 20);
                         spawnExplosionParticles(enemy.x, enemy.y, '#ff8c00', 15);
                         spawnExplosionParticles(enemy.x, enemy.y, '#ffaa33', 10);
-                        
                         const fragments = splitAsteroid(enemy, angle + Math.PI);
-                        
                         player.structure = Math.max(0, player.structure - 1);
-                        
                         if (player.structure <= 0) {
                             player.visible = false;
                             player.radius = 0;
                             player.collisionRadius = 0;
                             player.polygon = [];
-                            
                             gameActive = false;
                             gameOverFlag = true;
                             gameOverDiv.style.display = 'block';
@@ -1134,74 +1289,45 @@
                             gameOverDiv.innerHTML = '💥 FRACASO<br><small>Tu asteroide se desintegró</small>';
                             resetBtn.classList.add('visible');
                             nextLevelBtn.classList.remove('visible');
-                            
                             spawnExplosionParticles(player.x, player.y, '#81d4fa', 30);
                             spawnExplosionParticles(player.x, player.y, '#4fc3f7', 20);
                             spawnExplosionParticles(player.x, player.y, '#ffffff', 15);
-                            
                             updateUI();
                             return;
                         }
-                        
                         player.radius = player.baseRadius * (0.7 + 0.3 * (player.structure / 5));
                         player.collisionRadius = player.radius * 0.8;
                         player.polygon = generateIrregularPolygon(player.radius, 8 + Math.floor(player.structure * 1.5), 0.5);
                         player.visible = true;
-
                         enemyBaseSpeed += 1;
-
                         spawnExplosionParticles(player.x, player.y, '#81d4fa', 10);
-
                         enemies.splice(i, 1);
                         enemies.push(...fragments);
-
                         updateUI();
                     }
                 }
             }
 
-            // Función auxiliar para partículas de explosión (reducidas)
-            function spawnExplosionParticles(x, y, color, count) {
-                for (let j = 0; j < count; j++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = 1 + Math.random() * 3;
-                    trailParticles.push({
-                        x: x,
-                        y: y,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed - 1,
-                        life: 0.6 + Math.random() * 0.3,
-                        decay: 0.01 + Math.random() * 0.02,
-                        size: 1.5 + Math.random() * 3,
-                        color: color
-                    });
-                }
-            }
-
-            // ---------- Spawn de enemigos con colores del nivel ----------
+            // ---------- Spawn enemigos ----------
             function spawnEnemy() {
                 if (!gameActive) return;
                 const radius = 12 + Math.random() * 20;
                 const x = 20 + Math.random() * (W - 40);
                 const y = -radius - 10;
                 const speedX = (Math.random() - 0.5) * 0.8;
-
                 const vertices = 6 + Math.floor(Math.random() * 7);
                 const irregularity = 0.4 + Math.random() * 0.4;
                 const polygon = generateIrregularPolygon(radius, vertices, irregularity);
-
                 const colorSet = ASTEROID_COLORS[currentColorIndex];
                 const color = colorSet[Math.floor(Math.random() * colorSet.length)];
-
                 enemies.push({
-                    x: x,
-                    y: y,
-                    radius: radius,
+                    x, y,
+                    radius,
                     collisionRadius: radius,
-                    speedX: speedX,
+                    speedX,
                     speedY: enemyBaseSpeed,
-                    polygon: polygon,
-                    color: color,
+                    polygon,
+                    color,
                     shadowColor: "#cc5500",
                     rotation: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * 0.025,
@@ -1215,7 +1341,6 @@
                     e.x += e.speedX;
                     e.y += e.speedY;
                     e.rotation += e.rotSpeed;
-
                     if (e.y > H + 50 || e.x < -50 || e.x > W + 50) {
                         enemies.splice(i, 1);
                     }
@@ -1224,19 +1349,23 @@
 
             function updatePlayer() {
                 if (!gameActive) return;
-
                 const MOVE_SPEED = player.speed;
-
-                if (keys.up) player.y -= MOVE_SPEED;
-                if (keys.down) player.y += MOVE_SPEED;
-                if (keys.left) player.x -= MOVE_SPEED;
-                if (keys.right) player.x += MOVE_SPEED;
-
+                let moveX = padX;
+                let moveY = padY;
+                if (keys.up) moveY = -1;
+                if (keys.down) moveY = 1;
+                if (keys.left) moveX = -1;
+                if (keys.right) moveX = 1;
+                if (moveX !== 0 && moveY !== 0) {
+                    const len = Math.hypot(moveX, moveY);
+                    moveX /= len;
+                    moveY /= len;
+                }
+                player.x += moveX * MOVE_SPEED;
+                player.y += moveY * MOVE_SPEED;
                 player.x = Math.max(player.radius + 2, Math.min(W - player.radius - 2, player.x));
                 player.y = Math.max(player.radius + 2, Math.min(H - player.radius - 2, player.y));
-
                 player.rotation += 0.02;
-
                 if (gameActive && player.visible) {
                     const angle = Math.PI / 2;
                     for (let i = 0; i < 3; i++) {
@@ -1247,28 +1376,22 @@
                         spawnTrailParticle(px, py, trailColor);
                     }
                 }
-
                 updateUI();
             }
 
             // ---------- Dibujar ----------
             function draw() {
                 ctx.clearRect(0, 0, W, H);
-
-                // ---- Fondo ----
                 starOffset += STAR_SPEED;
                 if (starOffset > H * 2) starOffset -= H * 2;
-
                 for (let layer = 0; layer < 3; layer++) {
                     const layerSpeed = 1 + layer * 0.5;
                     const layerOffset = (starOffset * layerSpeed) % (H * 2);
-                    
                     for (let star of stars) {
                         if (star.layer !== layer) continue;
                         let yPos = (star.y + layerOffset) % (H * 2);
                         if (yPos > H) yPos -= H * 2;
                         if (yPos < -H) yPos += H * 2;
-                        
                         const alpha = star.brightness * 0.4;
                         ctx.globalAlpha = alpha;
                         ctx.fillStyle = "#ffffff";
@@ -1279,10 +1402,8 @@
                 }
                 ctx.globalAlpha = 1;
 
-                // ---- Planeta (solo si no está destruido) ----
                 if (currentPlanet.active && !currentPlanet.destroyed) {
                     drawPlanet(ctx, currentPlanet, currentPlanet.radius);
-
                 } else if (!currentPlanet.destroyed) {
                     ctx.fillStyle = "#ff883366";
                     ctx.font = "bold 16px monospace";
@@ -1292,62 +1413,33 @@
                     ctx.textAlign = "left";
                 }
 
-                // ---- Asteroides de explosión ----
                 drawExplosionAsteroids();
-
-                // ---- Cola de partículas ----
                 drawTrailParticles();
 
-                // ---- Enemigos con colores del nivel ----
                 for (let e of enemies) {
-                    drawPlayerPolygon(
-                        ctx,
-                        e.x, e.y,
-                        e.polygon,
-                        e.color,
-                        e.shadowColor || "#cc5500",
-                        e.rotation,
-                        false
-                    );
+                    drawPlayerPolygon(ctx, e.x, e.y, e.polygon, e.color, e.shadowColor || "#cc5500", e.rotation, false);
                 }
 
-                // ---- Jugador (solo si es visible) ----
                 if (player.visible) {
-                    drawPlayerPolygon(
-                        ctx,
-                        player.x, player.y,
-                        player.polygon,
-                        playerColor,
-                        "#4fc3f7",
-                        player.rotation,
-                        true,
-                        playerGlowColor
-                    );
+                    drawPlayerPolygon(ctx, player.x, player.y, player.polygon, playerColor, "#4fc3f7", player.rotation, true, playerGlowColor);
                 }
-
-                // ---- Indicadores OCULTOS ----
-                // Se ha eliminado toda la información de la esquina superior izquierda
-                // (❤️, 💀, ⚡, ✦, 🌍, 📏, 💥)
             }
 
-            // ---------- Bucle principal ----------
+            // ---------- Bucle ----------
             function loop() {
                 if (!gameOverFlag) {
                     gameTime += 1/60;
                     if (gameTime >= currentPlanet.appearTime && !currentPlanet.active) {
                         currentPlanet.active = true;
                     }
-
                     if (currentPlanet.active && !currentPlanet.destroyed) {
                         currentPlanet.y += currentPlanet.speed;
                     }
-
                     frameCounter++;
                     if (frameCounter >= spawnRate) {
                         frameCounter = 0;
                         spawnEnemy();
                     }
-
                     updatePlayer();
                     updateEnemies();
                     updateTrailParticles();
@@ -1358,7 +1450,6 @@
                     updateTrailParticles();
                     updateExplosionAsteroids();
                 }
-
                 draw();
                 requestAnimationFrame(loop);
             }
@@ -1376,26 +1467,17 @@
                 updateUI();
             }
 
-            // ---------- Eventos de teclado ----------
+            // ---------- Eventos ----------
             function keydownHandler(e) {
                 const key = e.key;
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Space'].includes(key)) {
                     e.preventDefault();
                 }
-
                 switch (key) {
-                    case 'ArrowUp':
-                        keys.up = true;
-                        break;
-                    case 'ArrowDown':
-                        keys.down = true;
-                        break;
-                    case 'ArrowLeft':
-                        keys.left = true;
-                        break;
-                    case 'ArrowRight':
-                        keys.right = true;
-                        break;
+                    case 'ArrowUp': case 'w': case 'W': keys.up = true; break;
+                    case 'ArrowDown': case 's': case 'S': keys.down = true; break;
+                    case 'ArrowLeft': case 'a': case 'A': keys.left = true; break;
+                    case 'ArrowRight': case 'd': case 'D': keys.right = true; break;
                 }
             }
 
@@ -1404,20 +1486,11 @@
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Space'].includes(key)) {
                     e.preventDefault();
                 }
-
                 switch (key) {
-                    case 'ArrowUp':
-                        keys.up = false;
-                        break;
-                    case 'ArrowDown':
-                        keys.down = false;
-                        break;
-                    case 'ArrowLeft':
-                        keys.left = false;
-                        break;
-                    case 'ArrowRight':
-                        keys.right = false;
-                        break;
+                    case 'ArrowUp': case 'w': case 'W': keys.up = false; break;
+                    case 'ArrowDown': case 's': case 'S': keys.down = false; break;
+                    case 'ArrowLeft': case 'a': case 'A': keys.left = false; break;
+                    case 'ArrowRight': case 'd': case 'D': keys.right = false; break;
                 }
             }
 
@@ -1427,10 +1500,8 @@
             resetBtn.addEventListener('click', resetGame);
             nextLevelBtn.addEventListener('click', goToNextLevel);
 
-            // Inicializar con el primer planeta
             updatePlanetFromIndex(0);
             resetGame();
-
             loop();
 
             window.addEventListener('unload', () => {
