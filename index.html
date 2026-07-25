@@ -47,7 +47,6 @@
             position: relative;
         }
         
-        /* ===== INFO EN COLUMNAS LATERALES DEL PAD ===== */
         .analog-pad-wrapper {
             position: relative;
             display: flex;
@@ -159,7 +158,7 @@
             position: relative;
         }
 
-        /* ===== PAD ANALÓGICO ===== */
+        /* ===== PAD ANALÓGICO FIJO ===== */
         .analog-pad-container {
             position: relative;
             display: flex;
@@ -313,6 +312,26 @@
             pointer-events: auto;
         }
 
+        .music-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: #4fc3f7;
+            font-size: 0.7rem;
+            background: rgba(10, 15, 30, 0.7);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            pointer-events: none;
+            animation: pulse-music 1s ease-in-out infinite;
+        }
+        @keyframes pulse-music {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
         @media (max-width: 500px) {
             .analog-pad {
                 width: 120px;
@@ -353,6 +372,10 @@
             .pad-info-left .info-item .value, .pad-info-right .info-item .value {
                 font-size: 0.65rem;
             }
+            .music-indicator {
+                font-size: 0.5rem;
+                padding: 2px 8px;
+            }
         }
         @media (max-width: 400px) {
             .analog-pad {
@@ -390,14 +413,14 @@
 </head>
 <body>
 
+    <div class="music-indicator" id="musicIndicator">🎵 Música Arcade</div>
+
     <div class="game-wrapper">
-        <!-- CANVAS -->
         <div class="relative">
             <canvas id="gameCanvas" width="400" height="600"></canvas>
             <div id="gameOverMsg">💥 IMPACTO<br><small>Mensaje</small></div>
         </div>
 
-        <!-- UI PANEL OCULTO -->
         <div class="ui-panel">
             <div class="stats">
                 <span>⚡ <span id="velDisplay">100</span>%</span>
@@ -409,9 +432,7 @@
             <div class="timer" id="timerDisplay">⏱ 0s</div>
         </div>
 
-        <!-- PAD ANALÓGICO CON INFO EN COLUMNAS LATERALES -->
         <div class="analog-pad-wrapper">
-            <!-- Columna Izquierda: Energía, Tiempo, Estructura -->
             <div class="pad-info-left" id="padInfoLeft">
                 <div class="info-item">
                     <span class="label">⚡ Energía</span>
@@ -427,7 +448,6 @@
                 </div>
             </div>
 
-            <!-- PAD ANALÓGICO -->
             <div class="analog-pad-container">
                 <div class="analog-pad" id="analogPad">
                     <span class="direction-indicator dir-up">▲</span>
@@ -439,7 +459,6 @@
                 </div>
             </div>
 
-            <!-- Columna Derecha: Planeta, Tamaño -->
             <div class="pad-info-right" id="padInfoRight">
                 <div class="info-item">
                     <span class="label">🌍 Planeta</span>
@@ -453,7 +472,6 @@
         </div>
     </div>
 
-    <!-- BOTONES FLOTANTES -->
     <div class="button-container">
         <button id="resetBtn">⟳ Reiniciar</button>
         <button id="nextLevelBtn" class="next-level">🚀 Siguiente</button>
@@ -464,7 +482,6 @@
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Elementos del pad info
             const padVel = document.getElementById('padVel');
             const padStruct = document.getElementById('padStruct');
             const padLevel = document.getElementById('padLevel');
@@ -478,7 +495,7 @@
             const W = 400,
                 H = 600;
 
-            // ========== CONTROL DEL PAD ANALÓGICO ==========
+            // ========== CONTROL DEL PAD ANALÓGICO (FIJO) ==========
             const analogPad = document.getElementById('analogPad');
             const thumb = document.getElementById('thumb');
             let isTouching = false;
@@ -646,68 +663,224 @@
 
             // ========== SISTEMA DE AUDIO ==========
             let audioCtx = null;
-            let musicInterval = null;
             let musicActive = false;
             let musicGain = null;
             let audioInitialized = false;
+            let musicInterval = null;
+            let currentMelody = 0;
+            let bassInterval = null;
+            let drumInterval = null;
 
             function initAudio() {
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     musicGain = audioCtx.createGain();
-                    musicGain.gain.value = 0.96;
+                    musicGain.gain.value = 0.7;
                     musicGain.connect(audioCtx.destination);
                 }
+            }
+
+            function playArcadeMelody() {
+                if (!musicActive || !audioCtx) return;
+                
+                try {
+                    const now = audioCtx.currentTime;
+                    
+                    const melodies = [
+                        [523, 659, 784, 523, 659, 784, 880, 784],
+                        [494, 587, 740, 494, 587, 740, 880, 784],
+                        [440, 554, 659, 440, 554, 659, 880, 784],
+                        [392, 523, 659, 392, 523, 659, 784, 880],
+                        [523, 659, 784, 880, 784, 659, 523, 392],
+                        [587, 740, 880, 587, 740, 880, 988, 880]
+                    ];
+                    
+                    const mel = melodies[currentMelody % melodies.length];
+                    const duration = 0.08;
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const noteIndex = (Math.floor(Math.random() * mel.length));
+                        const freq = mel[noteIndex] * (0.9 + Math.random() * 0.2);
+                        const osc = audioCtx.createOscillator();
+                        osc.type = ['square', 'sawtooth', 'triangle'][Math.floor(Math.random() * 3)];
+                        osc.frequency.setValueAtTime(freq, now + i * 0.05);
+                        
+                        const gain = audioCtx.createGain();
+                        gain.gain.setValueAtTime(0.04 + Math.random() * 0.06, now + i * 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + duration);
+                        
+                        osc.connect(gain);
+                        gain.connect(musicGain || audioCtx.destination);
+                        
+                        osc.start(now + i * 0.05);
+                        osc.stop(now + i * 0.05 + duration);
+                    }
+                    
+                    const mainNote = mel[Math.floor(Math.random() * mel.length)];
+                    const oscMain = audioCtx.createOscillator();
+                    oscMain.type = 'square';
+                    oscMain.frequency.setValueAtTime(mainNote * 2, now);
+                    const gainMain = audioCtx.createGain();
+                    gainMain.gain.setValueAtTime(0.03, now);
+                    gainMain.gain.exponentialRampToValueAtTime(0.001, now + duration * 1.5);
+                    oscMain.connect(gainMain);
+                    gainMain.connect(musicGain || audioCtx.destination);
+                    oscMain.start(now);
+                    oscMain.stop(now + duration * 1.5);
+                    
+                    if (Math.random() < 0.05) {
+                        currentMelody = (currentMelody + 1) % melodies.length;
+                    }
+                    
+                } catch(e) {}
+            }
+
+            function playArcadeBass() {
+                if (!musicActive || !audioCtx) return;
+                
+                try {
+                    const now = audioCtx.currentTime;
+                    const bassNotes = [55, 62, 69, 55, 62, 69, 74, 69];
+                    const note = bassNotes[Math.floor(Math.random() * bassNotes.length)];
+                    
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(note, now);
+                    
+                    const gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    
+                    osc.connect(gain);
+                    gain.connect(musicGain || audioCtx.destination);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } catch(e) {}
+            }
+
+            function playArcadeDrums() {
+                if (!musicActive || !audioCtx) return;
+                
+                try {
+                    const now = audioCtx.currentTime;
+                    
+                    const oscKick = audioCtx.createOscillator();
+                    oscKick.type = 'sine';
+                    oscKick.frequency.setValueAtTime(120, now);
+                    oscKick.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+                    const gainKick = audioCtx.createGain();
+                    gainKick.gain.setValueAtTime(0.2, now);
+                    gainKick.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    oscKick.connect(gainKick);
+                    gainKick.connect(musicGain || audioCtx.destination);
+                    oscKick.start(now);
+                    oscKick.stop(now + 0.08);
+                    
+                    if (Math.random() < 0.3) {
+                        const oscSnare = audioCtx.createOscillator();
+                        oscSnare.type = 'square';
+                        oscSnare.frequency.setValueAtTime(180 + Math.random() * 100, now);
+                        const gainSnare = audioCtx.createGain();
+                        gainSnare.gain.setValueAtTime(0.12, now);
+                        gainSnare.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                        oscSnare.connect(gainSnare);
+                        gainSnare.connect(musicGain || audioCtx.destination);
+                        oscSnare.start(now);
+                        oscSnare.stop(now + 0.05);
+                    }
+                    
+                    if (Math.random() < 0.4) {
+                        const oscHat = audioCtx.createOscillator();
+                        oscHat.type = 'square';
+                        oscHat.frequency.setValueAtTime(800 + Math.random() * 400, now);
+                        const gainHat = audioCtx.createGain();
+                        gainHat.gain.setValueAtTime(0.04, now);
+                        gainHat.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                        oscHat.connect(gainHat);
+                        gainHat.connect(musicGain || audioCtx.destination);
+                        oscHat.start(now);
+                        oscHat.stop(now + 0.03);
+                    }
+                    
+                } catch(e) {}
+            }
+
+            function startArcadeMusic() {
+                try {
+                    initAudio();
+                    if (musicActive) return;
+                    musicActive = true;
+                    
+                    musicInterval = setInterval(playArcadeMelody, 150);
+                    bassInterval = setInterval(playArcadeBass, 300);
+                    drumInterval = setInterval(playArcadeDrums, 200);
+                    
+                    document.getElementById('musicIndicator').textContent = '🎵 Música Arcade Activa';
+                    
+                } catch(e) {
+                    console.log('Error iniciando música arcade:', e);
+                }
+            }
+
+            function stopArcadeMusic() {
+                musicActive = false;
+                if (musicInterval) {
+                    clearInterval(musicInterval);
+                    musicInterval = null;
+                }
+                if (bassInterval) {
+                    clearInterval(bassInterval);
+                    bassInterval = null;
+                }
+                if (drumInterval) {
+                    clearInterval(drumInterval);
+                    drumInterval = null;
+                }
+                document.getElementById('musicIndicator').textContent = '🎵 Música Arcade';
             }
 
             function playExplosionSound() {
                 try {
                     initAudio();
                     const now = audioCtx.currentTime;
-                    const bufferSize = audioCtx.sampleRate * 0.4;
-                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        const env = Math.exp(-i / (bufferSize * 0.15));
-                        data[i] = (Math.random() * 2 - 1) * env * 0.9;
+                    
+                    for (let i = 0; i < 3; i++) {
+                        const bufferSize = audioCtx.sampleRate * (0.2 + i * 0.1);
+                        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        const data = buffer.getChannelData(0);
+                        for (let j = 0; j < bufferSize; j++) {
+                            const env = Math.exp(-j / (bufferSize * 0.2));
+                            data[j] = (Math.random() * 2 - 1) * env * (0.8 - i * 0.2);
+                        }
+                        const noise = audioCtx.createBufferSource();
+                        noise.buffer = buffer;
+                        const filter = audioCtx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(2000 - i * 500, now);
+                        filter.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                        const gain = audioCtx.createGain();
+                        gain.gain.setValueAtTime(0.4 - i * 0.1, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        noise.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(musicGain || audioCtx.destination);
+                        noise.start(now);
+                        noise.stop(now + 0.3);
                     }
-                    const noise = audioCtx.createBufferSource();
-                    noise.buffer = buffer;
-                    const filter = audioCtx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(1500, now);
-                    filter.frequency.exponentialRampToValueAtTime(200, now + 0.3);
-                    filter.Q.value = 1.5;
-                    const gain = audioCtx.createGain();
-                    gain.gain.setValueAtTime(0.6, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(musicGain || audioCtx.destination);
-                    noise.start(now);
-                    noise.stop(now + 0.4);
+                    
                     const osc = audioCtx.createOscillator();
                     osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(80, now);
-                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.4);
                     const gain2 = audioCtx.createGain();
-                    gain2.gain.setValueAtTime(0.4, now);
-                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    gain2.gain.setValueAtTime(0.3, now);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
                     osc.connect(gain2);
                     gain2.connect(musicGain || audioCtx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.3);
-                    const osc2 = audioCtx.createOscillator();
-                    osc2.type = 'square';
-                    osc2.frequency.setValueAtTime(300, now);
-                    osc2.frequency.exponentialRampToValueAtTime(100, now + 0.2);
-                    const gain3 = audioCtx.createGain();
-                    gain3.gain.setValueAtTime(0.15, now);
-                    gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    osc2.connect(gain3);
-                    gain3.connect(musicGain || audioCtx.destination);
-                    osc2.start(now);
-                    osc2.stop(now + 0.2);
+                    osc.stop(now + 0.4);
+                    
                 } catch(e) {}
             }
 
@@ -715,6 +888,7 @@
                 try {
                     initAudio();
                     const now = audioCtx.currentTime;
+                    
                     const bufferSize = audioCtx.sampleRate * 0.15;
                     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                     const data = buffer.getChannelData(0);
@@ -736,6 +910,7 @@
                     gain.connect(musicGain || audioCtx.destination);
                     noise.start(now);
                     noise.stop(now + 0.15);
+                    
                     const osc = audioCtx.createOscillator();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(150, now);
@@ -747,75 +922,15 @@
                     gain2.connect(musicGain || audioCtx.destination);
                     osc.start(now);
                     osc.stop(now + 0.12);
+                    
                 } catch(e) {}
-            }
-
-            function startAmbientMusic() {
-                try {
-                    initAudio();
-                    if (musicActive) return;
-                    musicActive = true;
-                    let noteIndex = 0;
-                    const notes = [48, 52, 50, 55, 52, 58, 46, 53];
-                    const durations = [1.2, 1.6, 1.4, 1.8, 1.3, 2.0, 1.5, 1.7];
-                    function playNote() {
-                        if (!musicActive) return;
-                        try {
-                            const now = audioCtx.currentTime;
-                            const freq = notes[noteIndex % notes.length] * 1.8;
-                            const dur = durations[noteIndex % durations.length] * 0.6;
-                            const osc = audioCtx.createOscillator();
-                            osc.type = 'sine';
-                            osc.frequency.setValueAtTime(freq, now);
-                            osc.frequency.exponentialRampToValueAtTime(freq * 0.96, now + dur);
-                            const lfo = audioCtx.createOscillator();
-                            lfo.frequency.value = 0.3 + Math.random() * 0.3;
-                            lfo.type = 'sawtooth';
-                            const lfoGain = audioCtx.createGain();
-                            lfoGain.gain.value = 2.5;
-                            lfo.connect(lfoGain);
-                            lfoGain.connect(osc.frequency);
-                            const gain = audioCtx.createGain();
-                            gain.gain.setValueAtTime(0.08, now);
-                            gain.gain.exponentialRampToValueAtTime(0.02, now + dur);
-                            osc.connect(gain);
-                            gain.connect(musicGain || audioCtx.destination);
-                            osc.start(now);
-                            osc.stop(now + dur);
-                            lfo.start(now);
-                            lfo.stop(now + dur);
-                            const osc2 = audioCtx.createOscillator();
-                            osc2.type = 'sawtooth';
-                            osc2.frequency.setValueAtTime(freq * 1.02 + 10, now);
-                            const gain2 = audioCtx.createGain();
-                            gain2.gain.setValueAtTime(0.03, now);
-                            gain2.gain.exponentialRampToValueAtTime(0.005, now + dur);
-                            osc2.connect(gain2);
-                            gain2.connect(musicGain || audioCtx.destination);
-                            osc2.start(now);
-                            osc2.stop(now + dur);
-                            noteIndex++;
-                            const nextDelay = 0.6 + Math.random() * 1.5;
-                            musicInterval = setTimeout(playNote, nextDelay * 1000);
-                        } catch(e) {}
-                    }
-                    setTimeout(playNote, 400);
-                } catch(e) {}
-            }
-
-            function stopAmbientMusic() {
-                musicActive = false;
-                if (musicInterval) {
-                    clearTimeout(musicInterval);
-                    musicInterval = null;
-                }
             }
 
             document.addEventListener('click', () => {
                 if (!audioInitialized) {
                     initAudio();
                     audioInitialized = true;
-                    startAmbientMusic();
+                    startArcadeMusic();
                 }
             }, { once: true });
 
@@ -823,7 +938,7 @@
                 try {
                     initAudio();
                     audioInitialized = true;
-                    startAmbientMusic();
+                    startArcadeMusic();
                 } catch(e) {}
             });
 
@@ -833,27 +948,22 @@
             let trailParticles = [];
             let explosionAsteroids = [];
 
-            function spawnTrailParticle(x, y, color) {
+            function spawnTrailParticle(x, y, color, size) {
                 trailParticles.push({
                     x, y,
                     vx: (Math.random() - 0.5) * 0.8,
                     vy: 1.0 + Math.random() * 2.0,
                     life: 1.0,
                     decay: 0.010 + Math.random() * 0.015,
-                    size: 1 + Math.random() * 2,
+                    size: size || (1 + Math.random() * 2),
                     color: color || '#81d4fa'
                 });
             }
 
-            // ========== FUNCIÓN MODIFICADA: Fragmentos de explosión del planeta ==========
             function spawnExplosionAsteroids(x, y, count, radius, planetColor) {
-                // Usar el color del planeta para todos los fragmentos
-                // Generar variaciones del color base para dar profundidad
                 const baseColor = planetColor || '#ff6b35';
                 
-                // Función para generar variaciones de color
                 function getColorVariant(base, variation) {
-                    // Si es un color hexadecimal, crear variaciones más claras y oscuras
                     if (base.startsWith('#')) {
                         const variants = [
                             base,
@@ -868,11 +978,8 @@
                 }
 
                 for (let j = 0; j < count; j++) {
-                    // Ángulo aleatorio en TODAS las direcciones (0 a 2PI)
                     const angle = Math.random() * Math.PI * 2;
-                    // Velocidad reducida para fragmentos más pequeños
                     const speed = 1.0 + Math.random() * (2.5 + radius * 0.02);
-                    // TAMAÑO REDUCIDO A LA MITAD
                     const size = 3 + Math.random() * (5 + radius * 0.07);
                     const vertices = 5 + Math.floor(Math.random() * 4);
                     const polygon = generateIrregularPolygon(size, vertices, 0.5);
@@ -895,7 +1002,6 @@
                 }
             }
 
-            // Funciones auxiliares para variaciones de color
             function lightenColor(color, amount) {
                 let r = parseInt(color.slice(1,2), 16) * 17 || parseInt(color.slice(1,3), 16);
                 let g = parseInt(color.slice(2,3), 16) * 17 || parseInt(color.slice(3,5), 16);
@@ -1091,6 +1197,7 @@
                 ctx.shadowBlur = 0;
             }
 
+            // ========== DIBUJAR PLANETA CON SATURNO DE UN SOLO ANILLO ==========
             function drawPlanet(ctx, planet, radius) {
                 const { x, y, color, name } = planet;
                 ctx.shadowColor = color;
@@ -1111,7 +1218,8 @@
                 ctx.fillStyle = grad;
                 ctx.fill();
                 ctx.shadowBlur = 0;
-                if (name.includes('Júpiter') || name.includes('Saturno') || name.includes('Urano') || name.includes('Neptuno')) {
+                
+                if (name.includes('Júpiter') || name.includes('Urano') || name.includes('Neptuno')) {
                     ctx.strokeStyle = color + '44';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([4, 8]);
@@ -1120,24 +1228,26 @@
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
+                
+                // SATURNO: UN SOLO ANILLO
                 if (name === 'Saturno') {
-                    ctx.strokeStyle = '#d4c48a66';
-                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#d4c48a88';
+                    ctx.lineWidth = 4;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#d4c48a44';
                     ctx.beginPath();
-                    ctx.ellipse(x, y, radius * 1.6, radius * 0.35, 0.4, 0, Math.PI * 2);
+                    ctx.ellipse(x, y, radius * 1.8, radius * 0.3, 0.3, 0, Math.PI * 2);
                     ctx.stroke();
-                    ctx.beginPath();
-                    ctx.ellipse(x, y, radius * 1.7, radius * 0.3, -0.4, 0, Math.PI * 2);
-                    ctx.stroke();
+                    
+                    ctx.shadowBlur = 0;
                     ctx.strokeStyle = '#d4c48a44';
-                    ctx.lineWidth = 1.5;
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.ellipse(x, y, radius * 1.4, radius * 0.4, 0.1, 0, Math.PI * 2);
+                    ctx.ellipse(x, y, radius * 1.5, radius * 0.25, 0.3, 0, Math.PI * 2);
                     ctx.stroke();
                 }
             }
 
-            // Versiones renombradas para evitar conflicto con las de arriba
             function lightenColor2(color, amount) {
                 let r = parseInt(color.slice(1,2), 16) * 17 || parseInt(color.slice(1,3), 16);
                 let g = parseInt(color.slice(2,3), 16) * 17 || parseInt(color.slice(3,5), 16);
@@ -1206,6 +1316,7 @@
                 size_km: 12756
             };
 
+            // ========== PLANETAS NACEN FUERA DE PANTALLA ==========
             function updatePlanetFromIndex(index) {
                 const planet = PLANETS[index];
                 const radius = getPlanetRadius(planet);
@@ -1217,7 +1328,8 @@
                 currentPlanet.speed = planet.speed;
                 currentPlanet.size_km = planet.size_km;
                 currentPlanet.active = false;
-                currentPlanet.y = -80;
+                currentPlanet.y = -radius - 50;
+                currentPlanet.x = 200;
                 currentPlanet.destroyed = false;
                 currentColorIndex = index % ASTEROID_COLORS.length;
                 updatePadInfo();
@@ -1264,7 +1376,7 @@
                 gameTime = 0;
                 gameWon = false;
                 currentPlanet.active = false;
-                currentPlanet.y = -80;
+                currentPlanet.y = -currentPlanet.radius - 50;
                 currentPlanet.destroyed = false;
                 const planet = PLANETS[currentPlanetIndex];
                 enemyBaseSpeed = 2 + currentPlanetIndex * 0.3;
@@ -1281,7 +1393,7 @@
                 keys.right = false;
                 updatePadInfo();
                 if (!musicActive) {
-                    startAmbientMusic();
+                    startArcadeMusic();
                 }
                 resetThumb();
             }
@@ -1351,7 +1463,6 @@
                         playExplosionSound();
                         const radius = currentPlanet.radius;
                         const asteroidCount = Math.floor(25 + radius * 0.6);
-                        // Pasar el color del planeta a la función de explosión
                         spawnExplosionAsteroids(currentPlanet.x, currentPlanet.y, asteroidCount, radius, currentPlanet.color);
                         spawnExplosionParticles(currentPlanet.x, currentPlanet.y, '#ff6b35', 15);
                         spawnExplosionParticles(currentPlanet.x, currentPlanet.y, '#ffaa00', 10);
@@ -1481,6 +1592,7 @@
                 }
             }
 
+            // ========== FUNCIÓN MODIFICADA: updatePlayer con Y = -5 ==========
             function updatePlayer() {
                 if (!gameActive) return;
                 const MOVE_SPEED = player.speed;
@@ -1501,13 +1613,23 @@
                 player.y = Math.max(player.radius + 2, Math.min(H - player.radius - 2, player.y));
                 player.rotation += 0.02;
                 if (gameActive && player.visible) {
-                    const angle = Math.PI / 2;
+                    const spreadArea = player.radius * 0.8;
+                    
                     for (let i = 0; i < 3; i++) {
-                        const spread = (Math.random() - 0.5) * 0.8;
-                        const dist = player.radius * 0.5 + Math.random() * 8;
-                        const px = player.x + Math.cos(angle + spread) * dist;
-                        const py = player.y + Math.sin(angle + spread) * dist + 5;
-                        spawnTrailParticle(px, py, trailColor);
+                        const xOffset = (Math.random() - 0.5) * spreadArea * 1.2;
+                        // Y FIJO en -5 (parte trasera exacta del asteroide)
+                        const yOffset = -5;
+                        
+                        const cos = Math.cos(player.rotation);
+                        const sin = Math.sin(player.rotation);
+                        const rotatedX = xOffset * cos - yOffset * sin;
+                        const rotatedY = xOffset * sin + yOffset * cos;
+                        
+                        const px = player.x + rotatedX;
+                        const py = player.y + rotatedY;
+                        
+                        const particleSize = 1 + Math.random() * 2;
+                        spawnTrailParticle(px, py, trailColor, particleSize);
                     }
                 }
                 updatePadInfo();
@@ -1538,7 +1660,7 @@
 
                 if (currentPlanet.active && !currentPlanet.destroyed) {
                     drawPlanet(ctx, currentPlanet, currentPlanet.radius);
-                } else if (!currentPlanet.destroyed) {
+                } else if (!currentPlanet.destroyed && !currentPlanet.active) {
                     ctx.fillStyle = "#ff883366";
                     ctx.font = "bold 16px monospace";
                     ctx.textAlign = "center";
@@ -1641,7 +1763,7 @@
             window.addEventListener('unload', () => {
                 window.removeEventListener('keydown', keydownHandler);
                 window.removeEventListener('keyup', keyupHandler);
-                stopAmbientMusic();
+                stopArcadeMusic();
             });
 
         })();
