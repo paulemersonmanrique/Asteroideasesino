@@ -650,7 +650,7 @@
                 });
             }
 
-            // ========== SISTEMA DE AUDIO - MÚSICA AL 40% DE VELOCIDAD ==========
+            // ========== SISTEMA DE AUDIO - MÚSICA AL 100% ==========
             let audioCtx = null;
             let musicActive = false;
             let musicGain = null;
@@ -665,7 +665,7 @@
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     musicGain = audioCtx.createGain();
-                    musicGain.gain.value = 0.7;
+                    musicGain.gain.value = 1.0;  // Volumen al 100%
                     musicGain.connect(audioCtx.destination);
                 }
             }
@@ -693,10 +693,9 @@
                 if (isMusicPaused) {
                     isMusicPaused = false;
                     if (musicActive) {
-                        // Velocidad al 40% (más lenta)
-                        musicInterval = setInterval(playArcadeMelody, 375);   // 150 / 0.4 = 375
-                        bassInterval = setInterval(playArcadeBass, 750);     // 300 / 0.4 = 750
-                        drumInterval = setInterval(playArcadeDrums, 500);    // 200 / 0.4 = 500
+                        musicInterval = setInterval(playArcadeMelody, 375);
+                        bassInterval = setInterval(playArcadeBass, 750);
+                        drumInterval = setInterval(playArcadeDrums, 500);
                         document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (40%)';
                     }
                 }
@@ -718,7 +717,7 @@
                     ];
                     
                     const mel = melodies[currentMelody % melodies.length];
-                    const duration = 0.2; // Más lento (antes 0.16)
+                    const duration = 0.2;
                     
                     for (let i = 0; i < 4; i++) {
                         const noteIndex = (Math.floor(Math.random() * mel.length));
@@ -835,7 +834,6 @@
                     musicActive = true;
                     isMusicPaused = false;
                     
-                    // Velocidad al 40%
                     musicInterval = setInterval(playArcadeMelody, 375);
                     bassInterval = setInterval(playArcadeBass, 750);
                     drumInterval = setInterval(playArcadeDrums, 500);
@@ -951,7 +949,6 @@
                 } catch(e) {}
             }
 
-            // ===== SONIDO DE OVNI - VOLUMEN AL 80% =====
             function playUfoSound() {
                 try {
                     initAudio();
@@ -1023,7 +1020,6 @@
                 });
             }
 
-            // ===== ANILLO DE ONDA EXPANSIVA =====
             function spawnShockwaveRing(x, y, maxRadius, color, duration) {
                 shockwaveRings.push({
                     x: x,
@@ -1143,6 +1139,7 @@
                 }
             }
 
+            // ========== FUNCIÓN MODIFICADA: GRAVEDAD 0 EN EXPLOSIÓN DE PLANETAS ==========
             function spawnExplosionAsteroids(x, y, count, radius, planetColors) {
                 const colors = planetColors || ['#ff6b35', '#ff8c00', '#ffaa33'];
                 
@@ -1166,7 +1163,7 @@
                         life: 1.0,
                         decay: 0.003 + Math.random() * 0.005,
                         radius: size,
-                        gravity: 0.01 + Math.random() * 0.02,
+                        gravity: 0,  // Gravedad CERO
                     });
                 }
             }
@@ -1176,7 +1173,7 @@
                     const a = explosionAsteroids[i];
                     a.x += a.vx;
                     a.y += a.vy;
-                    a.vy += a.gravity;
+                    // NO hay gravedad (a.vy += a.gravity; eliminado)
                     a.rotation += a.rotSpeed;
                     a.life -= a.decay;
                     if (a.life <= 0 || a.y > H + 100 || a.x < -100 || a.x > W + 100) {
@@ -1356,7 +1353,6 @@
                 ctx.shadowBlur = 0;
             }
 
-            // ========== DIBUJAR OVNI ==========
             function drawUfo(ctx, ufo) {
                 const { x, y, size, direction } = ufo;
                 const w = size * 2.5;
@@ -1627,10 +1623,8 @@
                 visible: true,
             };
 
-            // ========== FUNCIÓN MODIFICADA: COLISIÓN DEL JUGADOR AL 100% ==========
             function initPlayerPolygon() {
                 player.polygon = generateIrregularPolygon(player.radius, 10, 0.5);
-                // Ahora al 100% (sin factor 0.85)
                 player.collisionRadius = calculateAverageRadius(player.polygon);
             }
             initPlayerPolygon();
@@ -1873,7 +1867,7 @@
                 }
             }
 
-            // ========== FUNCIÓN MODIFICADA: handleCollisions con colisión 100% ==========
+            // ========== FUNCIÓN MODIFICADA: handleCollisions con sonido de colisión en OVNI ==========
             function handleCollisions() {
                 if (!gameActive) return;
 
@@ -1948,7 +1942,7 @@
                     }
                 }
 
-                // Colisión del jugador con asteroides enemigos (con colisión 100%)
+                // Colisión del jugador con asteroides enemigos
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     const enemy = enemies[i];
                     if (checkCollision(player, enemy)) {
@@ -1983,7 +1977,6 @@
                         player.radius = player.baseRadius * (0.7 + 0.3 * (player.structure / 5));
                         player.collisionRadius = player.radius * 0.8;
                         player.polygon = generateIrregularPolygon(player.radius, 8 + Math.floor(player.structure * 1.5), 0.5);
-                        // Colisión al 100%
                         player.collisionRadius = calculateAverageRadius(player.polygon);
                         player.visible = true;
                         enemyBaseSpeed += 1;
@@ -1994,10 +1987,13 @@
                     }
                 }
 
-                // Colisión del jugador con OVNI
+                // ===== COLISIÓN DEL JUGADOR CON OVNI (CON SONIDO DE COLISIÓN) =====
                 for (let i = ufos.length - 1; i >= 0; i--) {
                     const ufo = ufos[i];
                     if (checkCollision(player, ufo)) {
+                        // SONIDO DE COLISIÓN
+                        playCollisionSound();
+                        
                         player.structure = Math.min(5, player.structure + 1);
                         player.radius = player.baseRadius * (0.7 + 0.3 * (player.structure / 5));
                         player.collisionRadius = player.radius * 0.8;
@@ -2005,7 +2001,6 @@
                         player.collisionRadius = calculateAverageRadius(player.polygon);
                         player.visible = true;
                         
-                        playUfoSound();
                         spawnUfoExplosion(ufo.x, ufo.y);
                         spawnExplosionParticles(ufo.x, ufo.y, '#00ff88', 20);
                         spawnExplosionParticles(ufo.x, ufo.y, '#00ffcc', 15);
@@ -2021,6 +2016,7 @@
                     for (let j = enemies.length - 1; j >= 0; j--) {
                         const enemy = enemies[j];
                         if (checkCollision(ufo, enemy)) {
+                            playCollisionSound();
                             spawnExplosionParticles(enemy.x, enemy.y, '#ff6b35', 15);
                             spawnExplosionParticles(enemy.x, enemy.y, '#ffaa33', 10);
                             enemies.splice(j, 1);
