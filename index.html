@@ -47,7 +47,6 @@
             position: relative;
         }
         
-        /* ===== PAD ANALÓGICO FIJO CON INFO ===== */
         .analog-pad-wrapper {
             position: relative;
             display: block;
@@ -128,7 +127,6 @@
         .analog-pad .dir-left { left: 6px; top: 50%; transform: translateY(-50%); }
         .analog-pad .dir-right { right: 6px; top: 50%; transform: translateY(-50%); }
 
-        /* ===== INFO CENTRADA - FUENTE 140% ===== */
         .pad-info-left {
             position: absolute;
             left: 0px;
@@ -484,7 +482,7 @@
             const nextLevelBtn = document.getElementById('nextLevelBtn');
 
             const W = 400,
-                H = 600;
+            H = 600;
 
             // ========== CONTROL DEL PAD ANALÓGICO ==========
             const analogPad = document.getElementById('analogPad');
@@ -650,13 +648,11 @@
                 });
             }
 
-            // ========== SISTEMA DE AUDIO - MÚSICA AL 100% ==========
+            // ========== SISTEMA DE AUDIO (SOLO BAJOS Y BATERÍA) ==========
             let audioCtx = null;
             let musicActive = false;
             let musicGain = null;
             let audioInitialized = false;
-            let musicInterval = null;
-            let currentMelody = 0;
             let bassInterval = null;
             let drumInterval = null;
             let isMusicPaused = false;
@@ -665,7 +661,7 @@
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     musicGain = audioCtx.createGain();
-                    musicGain.gain.value = 1.0;  // Volumen al 100%
+                    musicGain.gain.value = 1.0;
                     musicGain.connect(audioCtx.destination);
                 }
             }
@@ -673,10 +669,6 @@
             function pauseMusic() {
                 if (musicActive && !isMusicPaused) {
                     isMusicPaused = true;
-                    if (musicInterval) {
-                        clearInterval(musicInterval);
-                        musicInterval = null;
-                    }
                     if (bassInterval) {
                         clearInterval(bassInterval);
                         bassInterval = null;
@@ -693,67 +685,11 @@
                 if (isMusicPaused) {
                     isMusicPaused = false;
                     if (musicActive) {
-                        musicInterval = setInterval(playArcadeMelody, 375);
                         bassInterval = setInterval(playArcadeBass, 750);
                         drumInterval = setInterval(playArcadeDrums, 500);
-                        document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (40%)';
+                        document.getElementById('musicIndicator').textContent = '🎵 Música (Bajos+Batería)';
                     }
                 }
-            }
-
-            function playArcadeMelody() {
-                if (!musicActive || !audioCtx || isMusicPaused) return;
-                
-                try {
-                    const now = audioCtx.currentTime;
-                    
-                    const melodies = [
-                        [523, 659, 784, 523, 659, 784, 880, 784],
-                        [494, 587, 740, 494, 587, 740, 880, 784],
-                        [440, 554, 659, 440, 554, 659, 880, 784],
-                        [392, 523, 659, 392, 523, 659, 784, 880],
-                        [523, 659, 784, 880, 784, 659, 523, 392],
-                        [587, 740, 880, 587, 740, 880, 988, 880]
-                    ];
-                    
-                    const mel = melodies[currentMelody % melodies.length];
-                    const duration = 0.2;
-                    
-                    for (let i = 0; i < 4; i++) {
-                        const noteIndex = (Math.floor(Math.random() * mel.length));
-                        const freq = mel[noteIndex] * (0.9 + Math.random() * 0.2);
-                        const osc = audioCtx.createOscillator();
-                        osc.type = ['square', 'sawtooth', 'triangle'][Math.floor(Math.random() * 3)];
-                        osc.frequency.setValueAtTime(freq, now + i * 0.125);
-                        
-                        const gain = audioCtx.createGain();
-                        gain.gain.setValueAtTime(0.04 + Math.random() * 0.06, now + i * 0.125);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.125 + duration);
-                        
-                        osc.connect(gain);
-                        gain.connect(musicGain || audioCtx.destination);
-                        
-                        osc.start(now + i * 0.125);
-                        osc.stop(now + i * 0.125 + duration);
-                    }
-                    
-                    const mainNote = mel[Math.floor(Math.random() * mel.length)];
-                    const oscMain = audioCtx.createOscillator();
-                    oscMain.type = 'square';
-                    oscMain.frequency.setValueAtTime(mainNote * 2, now);
-                    const gainMain = audioCtx.createGain();
-                    gainMain.gain.setValueAtTime(0.03, now);
-                    gainMain.gain.exponentialRampToValueAtTime(0.001, now + duration * 1.5);
-                    oscMain.connect(gainMain);
-                    gainMain.connect(musicGain || audioCtx.destination);
-                    oscMain.start(now);
-                    oscMain.stop(now + duration * 1.5);
-                    
-                    if (Math.random() < 0.05) {
-                        currentMelody = (currentMelody + 1) % melodies.length;
-                    }
-                    
-                } catch(e) {}
             }
 
             function playArcadeBass() {
@@ -769,7 +705,7 @@
                     osc.frequency.setValueAtTime(note, now);
                     
                     const gain = audioCtx.createGain();
-                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.setValueAtTime(0.12, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
                     
                     osc.connect(gain);
@@ -791,7 +727,7 @@
                     oscKick.frequency.setValueAtTime(120, now);
                     oscKick.frequency.exponentialRampToValueAtTime(40, now + 0.2);
                     const gainKick = audioCtx.createGain();
-                    gainKick.gain.setValueAtTime(0.2, now);
+                    gainKick.gain.setValueAtTime(0.25, now);
                     gainKick.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
                     oscKick.connect(gainKick);
                     gainKick.connect(musicGain || audioCtx.destination);
@@ -803,7 +739,7 @@
                         oscSnare.type = 'square';
                         oscSnare.frequency.setValueAtTime(180 + Math.random() * 100, now);
                         const gainSnare = audioCtx.createGain();
-                        gainSnare.gain.setValueAtTime(0.12, now);
+                        gainSnare.gain.setValueAtTime(0.15, now);
                         gainSnare.gain.exponentialRampToValueAtTime(0.001, now + 0.125);
                         oscSnare.connect(gainSnare);
                         gainSnare.connect(musicGain || audioCtx.destination);
@@ -816,7 +752,7 @@
                         oscHat.type = 'square';
                         oscHat.frequency.setValueAtTime(800 + Math.random() * 400, now);
                         const gainHat = audioCtx.createGain();
-                        gainHat.gain.setValueAtTime(0.04, now);
+                        gainHat.gain.setValueAtTime(0.06, now);
                         gainHat.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
                         oscHat.connect(gainHat);
                         gainHat.connect(musicGain || audioCtx.destination);
@@ -834,11 +770,10 @@
                     musicActive = true;
                     isMusicPaused = false;
                     
-                    musicInterval = setInterval(playArcadeMelody, 375);
                     bassInterval = setInterval(playArcadeBass, 750);
                     drumInterval = setInterval(playArcadeDrums, 500);
                     
-                    document.getElementById('musicIndicator').textContent = '🎵 Música Arcade (40%)';
+                    document.getElementById('musicIndicator').textContent = '🎵 Música (Bajos+Batería)';
                     
                 } catch(e) {
                     console.log('Error iniciando música arcade:', e);
@@ -848,10 +783,6 @@
             function stopArcadeMusic() {
                 musicActive = false;
                 isMusicPaused = false;
-                if (musicInterval) {
-                    clearInterval(musicInterval);
-                    musicInterval = null;
-                }
                 if (bassInterval) {
                     clearInterval(bassInterval);
                     bassInterval = null;
@@ -1139,7 +1070,6 @@
                 }
             }
 
-            // ========== FUNCIÓN MODIFICADA: GRAVEDAD 0 EN EXPLOSIÓN DE PLANETAS ==========
             function spawnExplosionAsteroids(x, y, count, radius, planetColors) {
                 const colors = planetColors || ['#ff6b35', '#ff8c00', '#ffaa33'];
                 
@@ -1163,7 +1093,7 @@
                         life: 1.0,
                         decay: 0.003 + Math.random() * 0.005,
                         radius: size,
-                        gravity: 0,  // Gravedad CERO
+                        gravity: 0,
                     });
                 }
             }
@@ -1173,7 +1103,6 @@
                     const a = explosionAsteroids[i];
                     a.x += a.vx;
                     a.y += a.vy;
-                    // NO hay gravedad (a.vy += a.gravity; eliminado)
                     a.rotation += a.rotSpeed;
                     a.life -= a.decay;
                     if (a.life <= 0 || a.y > H + 100 || a.x < -100 || a.x > W + 100) {
@@ -1413,7 +1342,7 @@
                 ctx.restore();
             }
 
-            // ========== DIBUJAR PLANETA CON BORDE NEGRO MÁS DELGADO ==========
+            // ========== DIBUJAR PLANETA CON BORDE NEGRO ==========
             function drawPlanet(ctx, planet, radius) {
                 const { x, y, name, colors } = planet;
                 const mainColor = colors[0];
@@ -1508,6 +1437,25 @@
                 ctx.arc(x, y, radius, 0, Math.PI * 2);
                 ctx.stroke();
                 
+                if (name === 'Tierra') {
+                    // Dibujar continentes en la Tierra
+                    for (let cont of continentPoints) {
+                        const translatedPoints = cont.points.map(p => ({
+                            x: p.x + cont.offsetX,
+                            y: p.y + cont.offsetY
+                        }));
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = cont.color;
+                        ctx.beginPath();
+                        ctx.moveTo(translatedPoints[0].x, translatedPoints[0].y);
+                        for (let i = 1; i < translatedPoints.length; i++) {
+                            ctx.lineTo(translatedPoints[i].x, translatedPoints[i].y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+                
                 if (name !== 'Mercurio') {
                     ctx.beginPath();
                     ctx.arc(x - radius * 0.15, y - radius * 0.15, radius * 0.3, 0, Math.PI * 2);
@@ -1558,24 +1506,6 @@
                     ctx.arc(x, y, radius * 1.25, 0, Math.PI * 2);
                     ctx.stroke();
                     ctx.setLineDash([]);
-                }
-                
-                if (name === 'Tierra') {
-                    for (let cont of continentPoints) {
-                        const translatedPoints = cont.points.map(p => ({
-                            x: p.x + cont.offsetX,
-                            y: p.y + cont.offsetY
-                        }));
-                        ctx.shadowBlur = 0;
-                        ctx.fillStyle = cont.color;
-                        ctx.beginPath();
-                        ctx.moveTo(translatedPoints[0].x, translatedPoints[0].y);
-                        for (let i = 1; i < translatedPoints.length; i++) {
-                            ctx.lineTo(translatedPoints[i].x, translatedPoints[i].y);
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                    }
                 }
             }
 
@@ -1867,7 +1797,101 @@
                 }
             }
 
-            // ========== FUNCIÓN MODIFICADA: handleCollisions con sonido de colisión en OVNI ==========
+            // ========== FUNCIÓN MODIFICADA: handleAsteroidCollisions ==========
+            function handleAsteroidCollisions() {
+                for (let i = 0; i < enemies.length; i++) {
+                    for (let j = i + 1; j < enemies.length; j++) {
+                        const a = enemies[i];
+                        const b = enemies[j];
+                        if (checkCollision(a, b)) {
+                            // Determinar cuál es más grande
+                            const aIsBigger = a.radius > b.radius;
+                            const big = aIsBigger ? a : b;
+                            const small = aIsBigger ? b : a;
+                            
+                            // Si el pequeño es menos de 60% del grande
+                            if (small.radius < big.radius * 0.6) {
+                                // 1. El grande PIERDE VELOCIDAD (se frena)
+                                const speedLoss = 0.3 + Math.random() * 0.2;
+                                big.speedX *= (1 - speedLoss * 0.5);
+                                big.speedY *= (1 - speedLoss * 0.5);
+                                
+                                // 2. El pequeño se DESTRUYE (desaparece)
+                                spawnExplosionParticles(small.x, small.y, '#ffaa33', 15);
+                                spawnExplosionParticles(small.x, small.y, '#ff8800', 10);
+                                enemies.splice(j, 1);
+                                enemies.splice(i, 1);
+                                
+                                // 3. El grande se DIVIDE en DOS MEDIANOS
+                                const newRadius = big.radius * 0.55;
+                                const colorSet = ASTEROID_COLORS[currentColorIndex];
+                                const color1 = colorSet[Math.floor(Math.random() * colorSet.length)];
+                                const color2 = colorSet[Math.floor(Math.random() * colorSet.length)];
+                                
+                                // Fragmento 1
+                                const angle1 = Math.random() * Math.PI * 2;
+                                const speed1 = 0.8 + Math.random() * 1.2;
+                                const poly1 = generateIrregularPolygon(newRadius, 6 + Math.floor(Math.random() * 4), 0.4 + Math.random() * 0.3);
+                                enemies.push({
+                                    x: big.x + Math.cos(angle1) * 15,
+                                    y: big.y + Math.sin(angle1) * 15,
+                                    radius: newRadius,
+                                    collisionRadius: newRadius,
+                                    speedX: Math.cos(angle1) * speed1 + big.speedX * 0.3,
+                                    speedY: Math.sin(angle1) * speed1 + big.speedY * 0.3,
+                                    polygon: poly1,
+                                    color: color1,
+                                    shadowColor: "#cc5500",
+                                    rotation: Math.random() * Math.PI * 2,
+                                    rotSpeed: (Math.random() - 0.5) * 0.03,
+                                });
+                                
+                                // Fragmento 2 (dirección opuesta)
+                                const angle2 = angle1 + Math.PI + (Math.random() - 0.5) * 0.8;
+                                const speed2 = 0.8 + Math.random() * 1.2;
+                                const poly2 = generateIrregularPolygon(newRadius, 6 + Math.floor(Math.random() * 4), 0.4 + Math.random() * 0.3);
+                                enemies.push({
+                                    x: big.x + Math.cos(angle2) * 15,
+                                    y: big.y + Math.sin(angle2) * 15,
+                                    radius: newRadius,
+                                    collisionRadius: newRadius,
+                                    speedX: Math.cos(angle2) * speed2 + big.speedX * 0.3,
+                                    speedY: Math.sin(angle2) * speed2 + big.speedY * 0.3,
+                                    polygon: poly2,
+                                    color: color2,
+                                    shadowColor: "#cc5500",
+                                    rotation: Math.random() * Math.PI * 2,
+                                    rotSpeed: (Math.random() - 0.5) * 0.03,
+                                });
+                                
+                                // Partículas de la división
+                                spawnExplosionParticles(big.x, big.y, '#ffcc44', 12);
+                                spawnExplosionParticles(big.x, big.y, '#ffaa33', 8);
+                                
+                            } else {
+                                // Colisión normal (se destruyen mutuamente)
+                                const dx = a.x - b.x;
+                                const dy = a.y - b.y;
+                                const angle = Math.atan2(dy, dx);
+                                playCollisionSound();
+                                const midX = (a.x + b.x) / 2;
+                                const midY = (a.y + b.y) / 2;
+                                spawnExplosionParticles(midX, midY, '#ff6b35', 10);
+                                spawnExplosionParticles(midX, midY, '#ffaa33', 7);
+                                const fragmentsA = splitAsteroid(a, angle);
+                                const fragmentsB = splitAsteroid(b, angle + Math.PI);
+                                enemies.splice(j, 1);
+                                enemies.splice(i, 1);
+                                enemies.push(...fragmentsA);
+                                enemies.push(...fragmentsB);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // ========== handleCollisions ==========
             function handleCollisions() {
                 if (!gameActive) return;
 
@@ -1918,29 +1942,7 @@
                 }
 
                 // Colisión entre asteroides enemigos
-                for (let i = 0; i < enemies.length; i++) {
-                    for (let j = i + 1; j < enemies.length; j++) {
-                        const a = enemies[i];
-                        const b = enemies[j];
-                        if (checkCollision(a, b)) {
-                            const dx = a.x - b.x;
-                            const dy = a.y - b.y;
-                            const angle = Math.atan2(dy, dx);
-                            playCollisionSound();
-                            const midX = (a.x + b.x) / 2;
-                            const midY = (a.y + b.y) / 2;
-                            spawnExplosionParticles(midX, midY, '#ff6b35', 10);
-                            spawnExplosionParticles(midX, midY, '#ffaa33', 7);
-                            const fragmentsA = splitAsteroid(a, angle);
-                            const fragmentsB = splitAsteroid(b, angle + Math.PI);
-                            enemies.splice(j, 1);
-                            enemies.splice(i, 1);
-                            enemies.push(...fragmentsA);
-                            enemies.push(...fragmentsB);
-                            break;
-                        }
-                    }
-                }
+                handleAsteroidCollisions();
 
                 // Colisión del jugador con asteroides enemigos
                 for (let i = enemies.length - 1; i >= 0; i--) {
@@ -1987,11 +1989,10 @@
                     }
                 }
 
-                // ===== COLISIÓN DEL JUGADOR CON OVNI (CON SONIDO DE COLISIÓN) =====
+                // Colisión del jugador con OVNI
                 for (let i = ufos.length - 1; i >= 0; i--) {
                     const ufo = ufos[i];
                     if (checkCollision(player, ufo)) {
-                        // SONIDO DE COLISIÓN
                         playCollisionSound();
                         
                         player.structure = Math.min(5, player.structure + 1);
